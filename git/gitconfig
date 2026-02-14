@@ -1,0 +1,18 @@
+# ~/.gitconfig
+ 
+[includeIf "gitdir:~/code/jb"]
+		path = ~/code/jb/.gitconfig-jb
+ 
+[includeIf "gitdir:~/code/combined-curiosity"]
+		path = ~/code/combined-curiosity/.gitconfig-cc
+ 
+[core]
+		excludesfile = ~/.gitignore      # valid everywhere
+		defaultBranch = main
+[init]
+	templatedir = /Users/johnblythe/.git-templates
+[push]
+	autoSetupRemote = true
+[user]
+	name = johnblythe
+	email = johnblythe@gmail.com
