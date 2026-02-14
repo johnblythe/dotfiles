@@ -17,7 +17,7 @@ dotfiles/
 ├── git/gitconfig         # Git config with conditional includes
 ├── claude/
 │   ├── CLAUDE.md         # Global Claude Code instructions
-│   ├── commands/         # 8 custom slash commands
+│   ├── commands/         # 9 custom slash commands
 │   └── hooks/            # Pre-commit hooks
 ├── zellij/
 │   ├── project.kdl.template
@@ -33,6 +33,7 @@ dotfiles/
 | `/commit` | Commit with changelog, HEREDOC format |
 | `/create-pr` | PR from branch with summary + test plan |
 | `/branch-start` | Checkout issue branch, fetch latest |
+| `/idea` | Explore, triage, promote ideas |
 | `/issue` | List, log, close, sync issues (unified) |
 | `/pr-review` | Fetch PR comments → todos |
 | `/rams` | Accessibility + design audit |
