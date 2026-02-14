@@ -1,0 +1,7 @@
+# Ghostty Configuration
+
+# Save window state (tabs, splits, positions) across restarts
+window-save-state = always
+
+# Theme - deep dark with cool blue/purple accents
+theme = TokyoNight Night

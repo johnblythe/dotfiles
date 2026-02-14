@@ -14,7 +14,7 @@ fi
 
 # Install essentials
 echo "==> Installing essentials via Homebrew..."
-brew install gh git nvm
+brew install gh git nvm zellij
 
 # Install Oh My Zsh if missing
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -33,10 +33,31 @@ backup_if_exists() {
 backup_if_exists "$HOME/.zshrc"
 backup_if_exists "$HOME/.gitconfig"
 
+# Create config directories
+mkdir -p "$HOME/.claude/commands" "$HOME/.claude/hooks"
+mkdir -p "$HOME/.config/zellij"
+mkdir -p "$HOME/.config/ghostty"
+
 # Create symlinks
 echo "==> Creating symlinks..."
 ln -sf "$DOTFILES_DIR/shell/zshrc" "$HOME/.zshrc"
 ln -sf "$DOTFILES_DIR/git/gitconfig" "$HOME/.gitconfig"
+
+# Claude Code
+ln -sf "$DOTFILES_DIR/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+for cmd in "$DOTFILES_DIR/claude/commands"/*.md; do
+  ln -sf "$cmd" "$HOME/.claude/commands/$(basename "$cmd")"
+done
+for hook in "$DOTFILES_DIR/claude/hooks"/*; do
+  ln -sf "$hook" "$HOME/.claude/hooks/$(basename "$hook")"
+done
+
+# Ghostty
+ln -sf "$DOTFILES_DIR/ghostty/config" "$HOME/.config/ghostty/config"
+
+# Zellij template
+ln -sf "$DOTFILES_DIR/zellij/project.kdl.template" "$HOME/.config/zellij/project.kdl.template"
+ln -sf "$DOTFILES_DIR/zellij/new-project.sh" "$HOME/.config/zellij/new-project.sh"
 
 # Authenticate GitHub CLI if needed
 if ! gh auth status &> /dev/null; then
