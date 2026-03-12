@@ -1,0 +1,2015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Telemetry: What We Already Know</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #0a0a0a; color: #e0e0e0; overflow: hidden; }
+
+  .deck { width: 100vw; height: 100vh; position: relative; }
+  .slide { display: none; width: 100%; height: 100%; padding: 50px 70px; flex-direction: column; justify-content: flex-start; overflow-y: auto; }
+  .slide.active { display: flex; }
+
+  h1 { font-size: 2.4em; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.15; }
+  h2 { font-size: 1.6em; font-weight: 600; color: #60a5fa; margin-bottom: 12px; }
+  h3 { font-size: 1.05em; font-weight: 600; color: #94a3b8; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
+  p, li { font-size: 1em; line-height: 1.55; color: #cbd5e1; }
+  .subtitle { font-size: 1.1em; color: #94a3b8; margin-bottom: 30px; }
+  .highlight { color: #facc15; font-weight: 600; }
+  .highlight-red { color: #f87171; font-weight: 600; }
+  .highlight-green { color: #4ade80; font-weight: 600; }
+  .highlight-blue { color: #60a5fa; font-weight: 600; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; flex: 1; align-items: start; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; flex: 1; }
+  .four-col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; }
+  .col { display: flex; flex-direction: column; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  th { text-align: left; padding: 7px 10px; color: #94a3b8; font-weight: 600; font-size: 0.82em; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #334155; }
+  td { padding: 7px 10px; border-bottom: 1px solid #1e293b; font-size: 0.9em; }
+  tr:hover td { background: #1e293b; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  .card { background: #1e293b; border-radius: 12px; padding: 20px; border: 1px solid #334155; }
+  .card h3 { margin-bottom: 8px; }
+  .big-num { font-size: 2.8em; font-weight: 700; line-height: 1; }
+  .big-label { font-size: 0.82em; color: #94a3b8; margin-top: 4px; }
+
+  .chart-container { position: relative; flex: 1; min-height: 0; max-height: 45vh; }
+
+  .nav { position: fixed; bottom: 24px; right: 36px; display: flex; gap: 10px; z-index: 100; }
+  .nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 7px 18px; border-radius: 8px; cursor: pointer; font-size: 0.85em; transition: all 0.15s; }
+  .nav button:hover { background: #475569; }
+  .nav button:disabled { opacity: 0.3; cursor: default; }
+
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: #3b82f6; transition: width 0.3s; z-index: 100; }
+  .slide-num { position: fixed; bottom: 28px; left: 36px; color: #475569; font-size: 0.82em; z-index: 100; }
+
+  .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.78em; font-weight: 600; margin-right: 4px; }
+  .tag-exists { background: #1a3a1a; color: #4ade80; }
+  .tag-gap { background: #3b1f1f; color: #f87171; }
+  .tag-partial { background: #1e3a5f; color: #60a5fa; }
+  .tag-wrong { background: #4a1f1f; color: #fca5a5; }
+
+  .quote { border-left: 3px solid #3b82f6; padding: 10px 18px; background: #1e293b; border-radius: 0 8px 8px 0; margin: 10px 0; font-style: italic; }
+
+  ul { padding-left: 18px; }
+  li { margin-bottom: 6px; }
+  li::marker { color: #475569; }
+
+  .vs-box { display: flex; align-items: center; gap: 16px; margin: 12px 0; }
+  .vs-old { background: #2d1b1b; border: 1px solid #7f1d1d; border-radius: 8px; padding: 12px 20px; text-align: center; text-decoration: line-through; opacity: 0.6; }
+  .vs-new { background: #1a2e1a; border: 2px solid #4ade80; border-radius: 8px; padding: 12px 20px; text-align: center; }
+  .vs-arrow { color: #475569; font-size: 1.4em; }
+
+  .fade-in { animation: fadeIn 0.35s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+  details.sql-reveal { margin-top: 10px; border-top: 1px solid #1e293b; padding-top: 6px; }
+  details.sql-reveal summary { cursor: pointer; font-size: 0.78em; color: #475569; font-weight: 500; user-select: none; letter-spacing: 0.3px; }
+  details.sql-reveal summary:hover { color: #60a5fa; }
+  details.sql-reveal pre { margin-top: 8px; background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 12px 16px; overflow-x: auto; max-height: 35vh; font-size: 0.75em; line-height: 1.45; }
+  details.sql-reveal code { color: #94a3b8; font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace; white-space: pre; }
+  details.sql-reveal .sql-label { display: inline-block; background: #1e293b; color: #60a5fa; font-size: 0.72em; padding: 1px 6px; border-radius: 3px; margin-bottom: 6px; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="slide-num" id="slideNum"></div>
+
+<div class="deck" id="deck">
+
+<!-- SLIDE 0: TITLE -->
+<div class="slide active" id="s0">
+  <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;text-align:center;">
+    <h3>HealthSource Engineering</h3>
+    <h1 style="font-size:3em;margin-bottom:16px;">Event Telemetry:<br>What We Already Know</h1>
+    <p class="subtitle">A data-driven baseline before we build anything new</p>
+    <div style="margin-top:40px;color:#475569;">
+      <p>Source: Production Snowflake &middot; <code>HEALTHSOURCE.CONNEX</code> &middot; Last 90 days</p>
+      <p style="margin-top:8px;">Use &larr; &rarr; arrow keys to navigate</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 1: THE SITUATION -->
+<div class="slide" id="s1">
+  <h2>The Situation</h2>
+  <div class="two-col">
+    <div class="col">
+      <p>Two documents propose building event telemetry for time-on-task measurement:</p>
+      <ul style="margin-top:14px;">
+        <li><strong>Infrastructure Spec</strong> (Engineering) &mdash; 7-9 weeks, Python/FastAPI pipeline, Azure Service Bus &rarr; analytics warehouse</li>
+        <li><strong>Event Taxonomy</strong> (Product) &mdash; 24 instrumentation points across 6 workflow stages, &le;4 weeks</li>
+      </ul>
+      <div style="margin-top:20px;background:#7f1d1d;border:2px solid #f87171;border-radius:12px;padding:20px;text-align:center;">
+        <p style="font-size:1.3em;font-weight:700;color:#fca5a5;line-height:1.4;">Both propose building from scratch.<br><span style="color:#fff;font-size:1.1em;">Neither checked what we already capture.</span></p>
+      </div>
+    </div>
+    <div class="col">
+      <div style="background:#1a3a1a;border:2px solid #4ade80;border-radius:12px;padding:20px;text-align:center;margin-bottom:14px;">
+        <p style="font-size:1.3em;font-weight:700;color:#4ade80;line-height:1.4;">What can we answer<br>RIGHT NOW &mdash; for free?</p>
+      </div>
+      <div class="card">
+        <h3>What we found</h3>
+        <ul style="padding-left:14px;font-size:0.95em;">
+          <li><strong>422 distinct audit event types</strong> already tracked in production</li>
+          <li>Status transitions with timestamps on every request</li>
+          <li><strong>127M</strong> state-change events in 90 days</li>
+          <li>~60% of the taxonomy's "new" events already exist</li>
+          <li>Zero new instrumentation needed for the macro view</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 1b: FTI BENCHMARK -->
+<div class="slide" id="s1b">
+  <h2>The Benchmark: 7 Minutes vs 4 Hours</h2>
+  <p class="subtitle">FTI Consulting (Nov 2025) timed 190 processors across 3,005 requests. We measured the same work from Snowflake.</p>
+  <div class="two-col" style="margin-top:10px;">
+    <div class="col">
+      <div class="card" style="margin-bottom:14px;">
+        <h3 style="color:#60a5fa;">FTI: Stopwatch (Touch Time Only)</h3>
+        <div class="chart-container" style="max-height:26vh;">
+          <canvas id="chart-fti-touch"></canvas>
+        </div>
+        <p style="font-size:0.82em;color:#94a3b8;margin-top:6px;">14 observers, on-site + remote. Active work only, excludes queue/idle.</p>
+      </div>
+      <div class="card">
+        <h3>FTI Also Confirmed</h3>
+        <ul style="font-size:0.85em;">
+          <li><span class="highlight-red">90%</span> of processors need STORK field corrections</li>
+          <li><span class="highlight-red">62%</span> of flagged QC conflicts are duplicate FPs</li>
+          <li><span class="highlight-red">68%</span> of sessions involve rerouting requests</li>
+          <li><span class="highlight-red">18%</span> of observed requests couldn&rsquo;t be submitted</li>
+        </ul>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:14px;">
+        <h3 style="color:#4ade80;">Snowflake: Wall-Clock (Full Lifecycle)</h3>
+        <div class="chart-container" style="max-height:26vh;">
+          <canvas id="chart-sf-wall"></canvas>
+        </div>
+        <p style="font-size:0.82em;color:#94a3b8;margin-top:6px;">800K+ human-worked requests. Status transition timestamps, last 90 days.</p>
+      </div>
+      <div style="background:#1a2e1a;border:2px solid #4ade80;border-radius:12px;padding:18px;text-align:center;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:20px;">
+          <div>
+            <div style="font-size:2.2em;font-weight:700;color:#60a5fa;">~7 min</div>
+            <div style="font-size:0.82em;color:#94a3b8;">FTI touch time</div>
+          </div>
+          <div style="font-size:2em;color:#475569;">&rarr;</div>
+          <div>
+            <div style="font-size:2.2em;font-weight:700;color:#f87171;">~4 hours</div>
+            <div style="font-size:0.82em;color:#94a3b8;">Snowflake wall-clock</div>
+          </div>
+          <div style="font-size:2em;color:#475569;">&rarr;</div>
+          <div>
+            <div style="font-size:2.2em;font-weight:700;color:#facc15;">35&times;</div>
+            <div style="font-size:0.82em;color:#94a3b8;">gap = queue + idle</div>
+          </div>
+        </div>
+        <p style="margin-top:10px;font-size:0.92em;color:#e2e8f0;"><strong>Processors are fast. The system around them is slow.</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: TWO POPULATIONS -->
+<div class="slide" id="s2">
+  <h2>Discovery #1: Two Populations Hiding in "Logging"</h2>
+  <p class="subtitle">The median logging time is meaningless without segmenting by intake channel</p>
+  <div class="two-col" style="margin-top:12px;">
+    <div class="col">
+      <div class="chart-container">
+        <canvas id="chart-populations"></canvas>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:14px;">
+        <div class="big-num highlight-green">1 sec</div>
+        <div class="big-label">Median for ELECTRONIC / PULLLIST / MANUAL</div>
+        <p style="margin-top:8px;font-size:0.85em;"><strong>Why?</strong> Not "good STORK" &mdash; data arrives pre-structured. Electronic = portal/EMR integration (fields pre-filled). PullList = spreadsheet auto-parsed. Manual = CSR entered data at creation. <strong>No logging needed.</strong></p>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="big-num highlight-red">19-142 min</div>
+        <div class="big-label">Median for UPLOAD / CENTRAL INTAKE</div>
+        <p style="margin-top:8px;font-size:0.85em;"><strong>Why?</strong> These arrive as scanned PDFs. ADE (OCR+NLP) reads the request letter, but a human logger must validate/correct every field, search for requester, enter patient info, set dates of service, etc.</p>
+      </div>
+      <div class="card" style="background:#0f172a;border-color:#1e3a5f;padding:14px;">
+        <h3 style="font-size:0.85em;">Intake Channel Glossary</h3>
+        <p style="font-size:0.8em;line-height:1.5;color:#94a3b8;">
+          <strong style="color:#f87171;">UPLOAD</strong> = PDF uploaded by CSR (preferred) &middot;
+          <strong style="color:#f87171;">CENTRAL INTAKE</strong> = Centralized team splits scanned batches &middot;
+          <strong style="color:#4ade80;">ELECTRONIC</strong> = Portal/EMR structured data &middot;
+          <strong style="color:#4ade80;">PULLLIST</strong> = Spreadsheet bulk (HEDIS, MRA) &middot;
+          <strong style="color:#4ade80;">MANUAL</strong> = "Add New Request" by CSR
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 3: LOGGING DISTRIBUTION + MAJOR CLASS SPREAD -->
+<div class="slide" id="s3">
+  <h2>Human Logging Time: The Spread by Requester Type</h2>
+  <p class="subtitle">UPLOAD + CENTRAL INTAKE only &middot; Why does ATTY take 3.5x longer than CLIN?</p>
+  <div class="two-col" style="margin-top:8px;">
+    <div class="col">
+      <div class="chart-container">
+        <canvas id="chart-distribution"></canvas>
+      </div>
+      <div style="margin-top:10px;">
+        <table style="font-size:0.82em;">
+          <thead><tr><th>Major Class</th><th>What it is</th><th class="num">P25</th><th class="num">Median</th><th class="num">P75</th></tr></thead>
+          <tbody>
+            <tr><td><span class="highlight-green">CLIN</span></td><td>Clinical (doctor/hospital)</td><td class="num">54m</td><td class="num">2.4h</td><td class="num">14h</td></tr>
+            <tr><td>PAT</td><td>Patient requesting own records</td><td class="num">1.2h</td><td class="num">3h</td><td class="num">16h</td></tr>
+            <tr><td>COPY</td><td>Copy service</td><td class="num">56m</td><td class="num">3h</td><td class="num">15h</td></tr>
+            <tr><td>INS</td><td>Insurance / claims</td><td class="num">1.6h</td><td class="num">4.6h</td><td class="num">17.5h</td></tr>
+            <tr><td>GOV</td><td>Government / regulatory</td><td class="num">1.7h</td><td class="num">5.5h</td><td class="num">16.8h</td></tr>
+            <tr style="background:#2d1b1b;"><td><span class="highlight-red">ATTY</span></td><td>Attorney / legal / subpoena</td><td class="num">2.4h</td><td class="num">8.3h</td><td class="num">18.8h</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:12px;">
+        <h3>Why CLIN is Fastest</h3>
+        <p style="font-size:0.9em;">Clinical requests come from other hospitals/doctors. Request letters are <strong>structured, professional forms</strong> with clear patient info, specific dates, standard record types. ADE (OCR) reads them well. Logger mostly validates.</p>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <h3>Why ATTY is 3.5x Slower</h3>
+        <p style="font-size:0.9em;">Attorney requests mean <strong>dense legal language</strong>, broad date ranges ("any and all records"), fee approval handling, sensitive data flags, non-standard authorization forms. Logger does heavy manual entry.</p>
+      </div>
+      <div class="card" style="background:#0f172a;border-color:#1e3a5f;">
+        <h3>The Implication</h3>
+        <p style="font-size:0.9em;">Averages are misleading. The taxonomy treats all requests the same. <span class="highlight-red">They're not.</span> ATTY at P75 takes <strong>18.8 hours</strong>. CLIN at P25 takes <strong>54 minutes</strong>. That's a <span class="highlight">21x spread</span>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: FULFILLMENT TAT -->
+<div class="slide" id="s3b">
+  <h2>Discovery #2: Fulfillment Is Even More Bimodal</h2>
+  <p class="subtitle">Same two-population pattern &mdash; but the spread is 600x, from 2 minutes to 20 hours</p>
+  <div class="two-col" style="margin-top:12px;">
+    <div class="col">
+      <div class="chart-container">
+        <canvas id="chart-fulfillment"></canvas>
+      </div>
+      <div style="margin-top:10px;">
+        <table style="font-size:0.82em;">
+          <thead><tr><th>Major Class</th><th class="num">Median</th><th class="num">P75</th><th class="num">P95</th><th class="num">Count</th></tr></thead>
+          <tbody>
+            <tr><td><span class="highlight-green">CLIN</span></td><td class="num">3.0h</td><td class="num">20h</td><td class="num">2.6d</td><td class="num">451K</td></tr>
+            <tr><td>GOV</td><td class="num">12.7h</td><td class="num">26.7h</td><td class="num">2.7d</td><td class="num">152K</td></tr>
+            <tr><td>PAT</td><td class="num">15.4h</td><td class="num">26.5h</td><td class="num">2.8d</td><td class="num">42K</td></tr>
+            <tr><td>INS</td><td class="num">16.2h</td><td class="num">29.4h</td><td class="num">2.8d</td><td class="num">132K</td></tr>
+            <tr style="background:#2d1b1b;"><td><span class="highlight-red">ATTY</span></td><td class="num">19.7h</td><td class="num">43.1h</td><td class="num">2.8d</td><td class="num">176K</td></tr>
+            <tr><td>COPY</td><td class="num">19.8h</td><td class="num">42.6h</td><td class="num">2.8d</td><td class="num">108K</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.78em;color:#64748b;margin-top:4px;">UPLOAD channel only &middot; no-EMR &middot; 90 days</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:14px;">
+        <h3>Auto-Fulfilled (MANUAL INTAKE)</h3>
+        <div class="big-num highlight-green">2 min</div>
+        <div class="big-label">Median fulfillment time &middot; 177K CLIN, 105K PAT, 107K FAC</div>
+        <p style="margin-top:8px;font-size:0.85em;">Pre-structured data flows straight through. <strong>No human fulfillment work.</strong></p>
+      </div>
+      <div class="card" style="margin-bottom:14px;">
+        <h3>The EMR Surprise</h3>
+        <p style="font-size:0.9em;">The taxonomy assumes EMR is the key differentiator. Production says otherwise:</p>
+        <div style="display:flex;gap:16px;margin-top:10px;">
+          <div style="text-align:center;flex:1;">
+            <div style="font-size:1.8em;font-weight:700;color:#60a5fa;">2.7h</div>
+            <div style="font-size:0.78em;color:#94a3b8;">CLIN+UPLOAD<br>with EMR</div>
+          </div>
+          <div style="text-align:center;flex:1;">
+            <div style="font-size:1.8em;font-weight:700;color:#60a5fa;">3.0h</div>
+            <div style="font-size:0.78em;color:#94a3b8;">CLIN+UPLOAD<br>no EMR</div>
+          </div>
+        </div>
+        <p style="margin-top:10px;font-size:0.85em;color:#94a3b8;">Only 10% difference. <span class="highlight">source_type and major_class</span> are the real drivers.</p>
+      </div>
+      <div class="card" style="background:#0f172a;border-color:#1e3a5f;">
+        <h3>The Implication</h3>
+        <p style="font-size:0.9em;">ATTY fulfillment takes <span class="highlight-red">6.6x longer</span> than CLIN. The taxonomy's "3-8x" estimate is a <span class="highlight">massive understatement</span>. And MANUAL INTAKE is <span class="highlight-green">600x faster</span> &mdash; because there's nothing to fulfill.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: THE ROSETTA STONE -->
+<div class="slide" id="s4">
+  <h2>Discovery #3: 422 Audit Event Types Already Exist</h2>
+  <p class="subtitle">The audit trail is a goldmine. Here's what maps directly to the taxonomy's "new" events.</p>
+  <div style="flex:1;overflow:auto;margin-top:6px;">
+    <table>
+      <thead>
+        <tr><th>Existing Audit Event</th><th class="num">90-Day Count</th><th>Maps To Taxonomy</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>RequestStateUpdated</code></td><td class="num">127M</td><td>All status transitions (stages 1-6)</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>AuditCamundaTaskEvent</code></td><td class="num">55M</td><td>Workflow task lifecycle</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>AuditCamundaAssignAndFetchSuccess</code></td><td class="num">21M</td><td>"Task assigned to processor"</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>EMRREQUESTUpdation*</code></td><td class="num">23M</td><td>EMR integration events</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>DigitalFulfillmentRuleEligible</code></td><td class="num">14M</td><td>Auto-fulfillment eligibility</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>DeliveryTaskComplete</code></td><td class="num">11.7M</td><td>"Delivery completed"</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>DocPublishStarted/Finished/Success</code></td><td class="num">10.9M</td><td>"Document published"</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>QCInProgressStarted</code></td><td class="num">9.2M</td><td>"QC started"</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>DeliveryMethodSelected</code></td><td class="num">7.2M</td><td>"Delivery method selection"</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>TransmissionTaskCompleted</code></td><td class="num">6.4M</td><td>"Transmission completed"</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>FulfillmentTaskFetched</code></td><td class="num">5.4M</td><td>"Fulfillment session started"</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>FullfillmentSubmitTaskCompleted</code></td><td class="num">5.6M</td><td>"Fulfillment completed"</td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td><code>PatientLookup Started/Finished/NotFound</code></td><td class="num">1.3M</td><td><code>roi.logging.patient_lookup_initiated</code></td><td><span class="tag tag-exists">Exists</span></td></tr>
+        <tr><td>Intra-session form field timing</td><td class="num">&mdash;</td><td>STORK edit tracking, field-level timing</td><td><span class="tag tag-gap">Real gap</span></td></tr>
+        <tr><td>Processor idle/active detection</td><td class="num">&mdash;</td><td>"Time-on-task" vs wall-clock time</td><td><span class="tag tag-gap">Real gap</span></td></tr>
+        <tr><td>Exception root cause classification</td><td class="num">&mdash;</td><td>Why do 13% of human requests rework?</td><td><span class="tag tag-gap">Real gap</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="quote" style="margin-top:10px;">
+    <span class="highlight">15+ of the taxonomy's 24 events already exist.</span> The real gaps are intra-step granularity: what happens DURING a 2-hour fulfillment session.
+  </div>
+</div>
+
+<!-- SLIDE 5: PATIENT LOOKUP -->
+<div class="slide" id="s5">
+  <h2>Discovery #4: Patient Lookup &mdash; Already Instrumented</h2>
+  <p class="subtitle">The taxonomy proposes <code>roi.logging.patient_lookup_initiated</code> as new. It already exists. And it tells a story.</p>
+  <div class="two-col" style="margin-top:12px;">
+    <div class="col">
+      <div class="chart-container">
+        <canvas id="chart-lookup"></canvas>
+      </div>
+      <p style="font-size:0.85em;color:#64748b;margin-top:8px;text-align:center;">Coverage varies by channel because auto-intake pre-populates patient data</p>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:14px;">
+        <h3>Lookup Failure Rate</h3>
+        <div class="four-col" style="gap:10px;margin-top:8px;">
+          <div style="text-align:center;">
+            <div class="big-num highlight-red" style="font-size:1.8em;">22%</div>
+            <div class="big-label">UPLOAD</div>
+          </div>
+          <div style="text-align:center;">
+            <div class="big-num highlight-red" style="font-size:1.8em;">20%</div>
+            <div class="big-label">CENTRAL</div>
+          </div>
+          <div style="text-align:center;">
+            <div class="big-num highlight" style="font-size:1.8em;">22%</div>
+            <div class="big-label">ELECTRONIC</div>
+          </div>
+          <div style="text-align:center;">
+            <div class="big-num highlight-green" style="font-size:1.8em;">12%</div>
+            <div class="big-label">MANUAL</div>
+          </div>
+        </div>
+        <p style="margin-top:12px;font-size:0.9em;">1 in 5 patient lookups returns <code>NotFound</code>. That's a UX pain point we can already quantify and track &mdash; <strong>no new instrumentation needed.</strong></p>
+      </div>
+      <div class="card">
+        <h3>Lookup Performance</h3>
+        <p style="font-size:0.95em;">Median: <span class="highlight-green">1 second</span> &middot; P95: <span class="highlight-green">2-3 seconds</span></p>
+        <p style="margin-top:8px;font-size:0.9em;">The lookup itself is fast. The cost is in the <strong>retry loop</strong> when it fails &mdash; user re-searches, tries variations, or manually enters. That loop time is the real gap.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: REWORK - THE REAL NUMBER -->
+<div class="slide" id="s6">
+  <h2>Discovery #5: The Real Rework Rate is 4x What We Thought</h2>
+  <p class="subtitle">Filtering to human-worked requests (UPLOAD + CENTRAL INTAKE) changes the story dramatically</p>
+  <div class="two-col" style="margin-top:12px;">
+    <div class="col">
+      <div class="vs-box">
+        <div class="vs-old">
+          <div style="font-size:2em;font-weight:700;color:#f87171;">3.2%</div>
+          <div style="font-size:0.8em;color:#94a3b8;">Redo rate (all requests)</div>
+        </div>
+        <div class="vs-arrow">&rarr;</div>
+        <div class="vs-new">
+          <div style="font-size:2em;font-weight:700;color:#4ade80;">13.3%</div>
+          <div style="font-size:0.8em;color:#94a3b8;">Redo rate (human-worked only)</div>
+        </div>
+      </div>
+      <div class="chart-container" style="margin-top:8px;">
+        <canvas id="chart-rework"></canvas>
+      </div>
+    </div>
+    <div class="col">
+      <table>
+        <thead>
+          <tr><th>Journey</th><th class="num">Count</th><th class="num">%</th><th class="num">Avg Time</th><th class="num">P95</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="highlight-green">Clean pass</span></td><td class="num">658K</td><td class="num">81.4%</td><td class="num">1.4 hrs</td><td class="num">2.7 hrs</td></tr>
+          <tr style="background:#2d1b1b;"><td><span class="highlight-red">Had redo</span></td><td class="num">108K</td><td class="num">13.3%</td><td class="num">16 hrs</td><td class="num">4.1 days</td></tr>
+          <tr><td>Other</td><td class="num">19K</td><td class="num">2.3%</td><td class="num">3.9 days</td><td class="num">7.1 days</td></tr>
+          <tr><td><span class="highlight-red">Had exception</span></td><td class="num">17K</td><td class="num">2.1%</td><td class="num">18 hrs</td><td class="num">3.7 days</td></tr>
+          <tr style="background:#2d1b1b;"><td><span class="highlight-red">Sent back</span></td><td class="num">6.6K</td><td class="num">0.8%</td><td class="num">3.8 days</td><td class="num">7 days</td></tr>
+        </tbody>
+      </table>
+      <div class="card" style="margin-top:14px;">
+        <h3>Why this matters</h3>
+        <p>Blending auto-transitioned requests (70% of volume) with human work <strong>hides the pain</strong>. When we look only at human work:</p>
+        <ul style="margin-top:6px;font-size:0.9em;">
+          <li><span class="highlight-red">1 in 7</span> requests goes through rework</li>
+          <li>Redo requests avg <span class="highlight-red">16 hours</span> total logging time</li>
+          <li>"Sent back" requests take <span class="highlight-red">4-7 days</span> to resolve</li>
+        </ul>
+        <p style="margin-top:8px;font-size:0.9em;">This is a bigger efficiency lever than shaving seconds off clean passes.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6b: REWORK COST QUANTIFIED -->
+<div class="slide" id="s6b">
+  <h3 style="color:#94a3b8;">Discovery #5 (cont.)</h3>
+  <h2>The Rework Tax: Quantified</h2>
+  <p class="subtitle">Every redo costs 4.3&times; a clean pass. At 427K/year, the waste is enormous &mdash; and most of it is queue time, not work.</p>
+  <div class="four-col" style="margin-top:14px;margin-bottom:14px;">
+    <div class="card" style="text-align:center;">
+      <div class="big-num" style="color:#f87171;">427K</div>
+      <div class="big-label">Rework requests / year</div>
+      <p style="font-size:0.78em;color:#64748b;margin-top:4px;">107K per 90 days annualized</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="big-num" style="color:#facc15;">4.3&times;</div>
+      <div class="big-label">Redo vs clean cost ratio</div>
+      <p style="font-size:0.78em;color:#64748b;margin-top:4px;">11.9h total vs 2.8h clean</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="big-num" style="color:#f87171;">148</div>
+      <div class="big-label">FTEs in rework touch time</div>
+      <p style="font-size:0.78em;color:#64748b;margin-top:4px;">Just the active work portion</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="big-num" style="color:#f87171;">20</div>
+      <div class="big-label">Max redos on 1 request</div>
+      <p style="font-size:0.78em;color:#64748b;margin-top:4px;">Some requests cycle endlessly</p>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="col">
+      <div class="chart-container" style="max-height:32vh;">
+        <canvas id="chart-rework-cost"></canvas>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:12px;">
+        <h3>Time Per Request by Journey</h3>
+        <table style="font-size:0.85em;">
+          <thead><tr><th>Journey</th><th class="num">Active</th><th class="num">Queue</th><th class="num">Total</th><th class="num">&times; Clean</th></tr></thead>
+          <tbody>
+            <tr><td><span class="highlight-green">Clean</span></td><td class="num">2.8h</td><td class="num">&mdash;</td><td class="num">2.8h</td><td class="num">1.0&times;</td></tr>
+            <tr style="background:#2d1b1b;"><td><span class="highlight-red">Redo</span></td><td class="num">1.5h</td><td class="num">10.4h</td><td class="num">11.9h</td><td class="num highlight-red">4.3&times;</td></tr>
+            <tr style="background:#2d1b1b;"><td><span class="highlight-red">Exception</span></td><td class="num">1.7h</td><td class="num">16.8h</td><td class="num">18.5h</td><td class="num highlight-red">6.6&times;</td></tr>
+            <tr style="background:#2d1b1b;"><td><span class="highlight-red">Sent Back</span></td><td class="num">12.4h</td><td class="num">31.8h</td><td class="num">44.2h</td><td class="num highlight-red">15.8&times;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="background:#0f172a;border-color:#1e3a5f;">
+        <p style="font-size:0.85em;"><span class="highlight">Redo active work (1.5h) is LESS than a clean pass (2.8h).</span> The cost isn&rsquo;t the rework itself &mdash; it&rsquo;s the <span class="highlight-red">10.4 hours in queue</span> between &ldquo;flagged&rdquo; and &ldquo;picked up.&rdquo;</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: EXCEPTIONS DECODED -->
+<div class="slide" id="s7">
+  <h2>Exceptions Decoded: The #1 Efficiency Lever</h2>
+  <p class="subtitle">385K exceptions on human-worked requests in 90 days &mdash; and now we know exactly why</p>
+  <div class="two-col" style="margin-top:8px;">
+    <div class="col">
+      <div class="chart-container" style="max-height:52vh;">
+        <canvas id="chart-exceptions"></canvas>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:10px;">
+        <h3>Top 3 = 62% of All Exceptions</h3>
+        <table style="font-size:0.82em;">
+          <thead><tr><th>Reason</th><th class="num">Count</th><th class="num">%</th><th>Skew</th></tr></thead>
+          <tbody>
+            <tr><td><span class="highlight-red">Clinic</span></td><td class="num">78.5K</td><td class="num">20.4%</td><td>93% CLIN, 83% Central Intake</td></tr>
+            <tr><td><span class="highlight-red">Field Input Required</span></td><td class="num">67.5K</td><td class="num">17.5%</td><td>58% Upload</td></tr>
+            <tr><td><span class="highlight-red">Global Field Input</span></td><td class="num">45.5K</td><td class="num">11.8%</td><td>61% Upload</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="margin-bottom:10px;">
+        <h3>TAT Impact: Field Input Is the Killer</h3>
+        <table style="font-size:0.82em;">
+          <thead><tr><th>Exception Type</th><th class="num">Median Fulfill</th><th class="num">vs Clean</th></tr></thead>
+          <tbody>
+            <tr><td>No exception</td><td class="num">8.0h</td><td class="num">&mdash;</td></tr>
+            <tr><td>Clinic</td><td class="num">2.8h</td><td class="num"><span class="highlight-green">&minus;65%</span></td></tr>
+            <tr style="background:#2d1b1b;"><td>Field Input Required</td><td class="num">22.1h</td><td class="num"><span class="highlight-red">+176%</span></td></tr>
+            <tr style="background:#2d1b1b;"><td>Global Field Input</td><td class="num">18.9h</td><td class="num"><span class="highlight-red">+136%</span></td></tr>
+            <tr><td>Internal Department</td><td class="num">18.5h</td><td class="num"><span class="highlight-red">+131%</span></td></tr>
+            <tr><td>Microfiche/Microfilm</td><td class="num">22.0h</td><td class="num"><span class="highlight-red">+175%</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="background:#0f172a;border-color:#1e3a5f;">
+        <h3>The Telemetry Implication</h3>
+        <p style="font-size:0.85em;"><span class="highlight">"Field Input Required"</span> means the system can't proceed &mdash; data is missing. Combined (17.5 + 11.8 = <strong>29.3%</strong>), this is the #1 exception category. Tracking <em>which</em> fields trigger this &mdash; that's where targeted telemetry earns its keep.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: TOUCH TIME VS WAIT TIME -->
+<div class="slide" id="s8b">
+  <h2>Discovery #6: 65% of Rework Time Is Queue, Not Work</h2>
+  <p class="subtitle">The bottleneck isn't how long work takes &mdash; it's how long requests sit waiting between stages</p>
+  <div class="two-col" style="margin-top:8px;">
+    <div class="col">
+      <h3>Happy Path (Clean Pass): 2.8h total</h3>
+      <div class="chart-container" style="max-height:22vh;">
+        <canvas id="chart-happy-path"></canvas>
+      </div>
+      <h3 style="margin-top:20px;">Rework Paths: Where the Time Goes</h3>
+      <div class="chart-container" style="max-height:28vh;">
+        <canvas id="chart-touch-wait"></canvas>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:10px;">
+        <h3>The Pattern</h3>
+        <p style="font-size:0.9em;">A redo request's life:</p>
+        <ol style="font-size:0.85em;padding-left:18px;margin-top:6px;">
+          <li>Logged in <span class="highlight-green">54 min</span> (active work)</li>
+          <li>Moves to QC &mdash; reviewed in <span class="highlight-green">10 min</span></li>
+          <li>Sent to redo queue, <span class="highlight-red">sits for 6.6 hours</span></li>
+          <li>Picked up, redo takes <span class="highlight-green">16 min</span></li>
+          <li>Moves forward again</li>
+        </ol>
+        <p style="margin-top:8px;font-size:0.85em;"><strong>1.5h of work. 10+ hours of waiting.</strong></p>
+      </div>
+      <div class="card" style="margin-bottom:10px;">
+        <h3>Per-Status Median Durations</h3>
+        <table style="font-size:0.78em;">
+          <thead><tr><th>Status</th><th>Type</th><th class="num">Median</th></tr></thead>
+          <tbody>
+            <tr><td>Logging</td><td><span class="tag tag-exists">Active</span></td><td class="num">2.1h</td></tr>
+            <tr><td>Redo Logging</td><td><span class="tag tag-exists">Active</span></td><td class="num">16m</td></tr>
+            <tr><td>QC In Progress</td><td><span class="tag tag-exists">Active</span></td><td class="num">10m</td></tr>
+            <tr><td>Back To Logging</td><td><span class="tag tag-gap">Queue</span></td><td class="num">6.6h</td></tr>
+            <tr><td>Logging Exception</td><td><span class="tag tag-gap">Hold</span></td><td class="num">6.9h</td></tr>
+            <tr><td>Fulfillment Exception</td><td><span class="tag tag-gap">Hold</span></td><td class="num">20.1h</td></tr>
+            <tr><td>Fulfillment</td><td><span class="tag tag-exists">Active</span></td><td class="num">18.6h</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="background:#0f172a;border-color:#1e3a5f;">
+        <h3>The Implication</h3>
+        <p style="font-size:0.85em;">New telemetry won't fix queue time. <span class="highlight">This is a routing and staffing problem.</span> The highest-ROI intervention is reducing the 6-7 hour gap between "redo flagged" and "someone picks it up."</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8b2: THE COST OF QUEUE TIME -->
+<div class="slide" id="s8b2">
+  <h3 style="color:#94a3b8;">Discovery #6 (cont.)</h3>
+  <h2>The Cost of Queue Time: 3,222 FTE-Equivalents</h2>
+  <p class="subtitle">Exception queues alone burn more wall-clock capacity than most teams can imagine</p>
+  <div class="four-col" style="margin-top:14px;margin-bottom:14px;">
+    <div class="card" style="text-align:center;">
+      <div class="big-num" style="color:#f87171;">3,222</div>
+      <div class="big-label">FTE-equiv in exception queues</div>
+      <p style="font-size:0.78em;color:#64748b;margin-top:4px;">Fulfillment: 1,601 &middot; Logging: 1,422</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="big-num" style="color:#facc15;">842</div>
+      <div class="big-label">FTEs in weekend excess</div>
+      <p style="font-size:0.78em;color:#64748b;margin-top:4px;">56.7h weekend vs 11.8h biz hours</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="big-num" style="color:#f87171;">148</div>
+      <div class="big-label">FTEs in rework touch time</div>
+      <p style="font-size:0.78em;color:#64748b;margin-top:4px;">427K rework requests / year</p>
+    </div>
+    <div class="card" style="text-align:center;">
+      <div class="big-num" style="color:#60a5fa;">5.8</div>
+      <div class="big-label">FTEs reviewing false positives</div>
+      <p style="font-size:0.78em;color:#64748b;margin-top:4px;">2.9M conflicts/yr, 92.9% FP</p>
+    </div>
+  </div>
+  <div class="two-col">
+    <div class="col">
+      <div class="chart-container" style="max-height:30vh;">
+        <canvas id="chart-queue-cost"></canvas>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:12px;">
+        <h3>How We Calculated This</h3>
+        <table style="font-size:0.82em;">
+          <thead><tr><th>Query</th><th>What It Measured</th><th>Finding</th></tr></thead>
+          <tbody>
+            <tr><td>Q16</td><td>Per-status duration breakdown</td><td>Back To Logging = 6.6h queue</td></tr>
+            <tr><td>Q17</td><td>Rework: wall clock vs active</td><td>~35% active, ~65% queue</td></tr>
+            <tr><td>Q18</td><td>Clean vs redo vs exception</td><td>Redo: 1.5h work in 11.9h total</td></tr>
+            <tr><td>Q33</td><td>Exception queue &rarr; FTEs</td><td>3,222 FTE-equiv annual</td></tr>
+            <tr><td>Q35</td><td>Weekend timing gap</td><td>Weekend 4.8&times; business hours</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="background:#1a2e1a;border:2px solid #4ade80;border-radius:12px;padding:16px;text-align:center;">
+        <p style="font-size:1.1em;font-weight:700;color:#4ade80;">20% exception queue reduction = ~640 FTE-equivalents reclaimed</p>
+        <p style="font-size:0.85em;color:#94a3b8;margin-top:6px;">This is a routing and staffing problem, not an instrumentation problem.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 10: WHY THINGS GET SENT BACK -->
+<div class="slide" id="s8c">
+  <h3 style="color:#94a3b8;">Discovery #6</h3>
+  <h2>Why Things Get Sent Back</h2>
+  <p class="subtitle">158K resubmissions to logging in 90 days — comments reveal clear categories</p>
+  <div class="two-col" style="margin-top:10px;">
+    <div class="col">
+      <div class="chart-container" style="max-height:42vh;">
+        <canvas id="chart-resubmit-reasons"></canvas>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:12px;">
+        <h3 style="color:#4ade80;">Automatable (~35%)</h3>
+        <table style="font-size:0.82em;">
+          <tr><td>Patient/MRN Issue</td><td class="num">21.4K</td><td class="num">13.6%</td></tr>
+          <tr><td>Site/Location Update</td><td class="num">20.7K</td><td class="num">13.1%</td></tr>
+          <tr><td>DAR/Relog Required</td><td class="num">13.0K</td><td class="num">8.3%</td></tr>
+        </table>
+        <p style="font-size:0.82em;margin-top:8px;color:#94a3b8;">Common comments: "adding mrn", "Updated site location", "please relog for DAR"</p>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <h3 style="color:#facc15;">Process-Dependent (~28%)</h3>
+        <table style="font-size:0.82em;">
+          <tr><td>Continuity of Care</td><td class="num">15.8K</td><td class="num">10.0%</td></tr>
+          <tr><td>Split / Multiple Items</td><td class="num">11.8K</td><td class="num">7.4%</td></tr>
+          <tr><td>Billing/Fee/Cert</td><td class="num">6.9K</td><td class="num">4.4%</td></tr>
+          <tr><td>Second Review</td><td class="num">5.8K</td><td class="num">3.7%</td></tr>
+          <tr><td>Pull List</td><td class="num">3.5K</td><td class="num">2.2%</td></tr>
+        </table>
+      </div>
+      <div class="card" style="background:#0f172a;border-color:#1e3a5f;">
+        <p style="font-size:0.85em;"><span class="highlight">35% of resubmissions are data corrections</span> (MRN, site, DAR) that could be prevented or automated upstream. Each one sits in queue 6-10h before pickup.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 11: QC VERIFY FALSE POSITIVES -->
+<div class="slide" id="s8d">
+  <h3 style="color:#94a3b8;">Discovery #7</h3>
+  <h2>QC Verify: 99% False Positive Rate</h2>
+  <p class="subtitle">The automated QC system flags conflicts — but reviewers ignore almost all of them</p>
+  <div class="two-col" style="margin-top:10px;">
+    <div class="col">
+      <div class="four-col" style="margin-bottom:16px;">
+        <div class="card" style="text-align:center;">
+          <div class="big-num" style="color:#f87171;">800K</div>
+          <div class="big-label">Conflicts flagged / qtr</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div class="big-num" style="color:#facc15;">99.1%</div>
+          <div class="big-label">Ignored (false positive)</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div class="big-num" style="color:#4ade80;">0.9%</div>
+          <div class="big-label">Actual issues deleted</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div class="big-num" style="color:#60a5fa;">2</div>
+          <div class="big-label">Conflict types checked</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <h3>Why Reviewers Ignore Conflicts</h3>
+        <div class="chart-container" style="max-height:30vh;">
+          <canvas id="chart-ignore-reasons"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:12px;">
+        <h3>What Verify Checks</h3>
+        <table style="font-size:0.85em;">
+          <thead><tr><th>Identifier</th><th>90d Count</th><th>Unique Reqs</th></tr></thead>
+          <tbody>
+            <tr><td>Patient Name</td><td class="num">524K</td><td class="num">137K</td></tr>
+            <tr><td>DOB</td><td class="num">272K</td><td class="num">108K</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:0.82em;margin-top:10px;color:#94a3b8;">Verify compares chart page content to logged patient data. Flags mismatches in name/DOB.</p>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <h3>Exception Comment Signals</h3>
+        <table style="font-size:0.82em;">
+          <thead><tr><th>Keyword</th><th>Field Input Req</th><th>Invalid/Incomplete</th></tr></thead>
+          <tbody>
+            <tr><td>"missing"</td><td class="num highlight-red">36%</td><td class="num highlight-red">70%</td></tr>
+            <tr><td>"name"</td><td class="num">5.1%</td><td class="num">8.5%</td></tr>
+            <tr><td>"address"</td><td class="num">~12%</td><td class="num">~20%</td></tr>
+            <tr><td>"auth"</td><td class="num">0.4%</td><td class="num">0.7%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="background:#0f172a;border-color:#1e3a5f;">
+        <p style="font-size:0.85em;"><span class="highlight">Pre-validation > Post-detection.</span> Instead of flagging conflicts after logging, check for required fields (address, patient name) before the request enters the workflow.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 12: TEMPORAL PATTERNS -->
+<div class="slide" id="s8e">
+  <h3 style="color:#94a3b8;">Discovery #8</h3>
+  <h2>When Things Break: Temporal Patterns</h2>
+  <p class="subtitle">Exception queue time varies 3x by shift and 10x on weekends</p>
+  <div class="two-col" style="margin-top:10px;">
+    <div class="col">
+      <div class="chart-container" style="max-height:38vh;">
+        <canvas id="chart-temporal-shift"></canvas>
+      </div>
+      <div class="card" style="margin-top:12px;background:#0f172a;border-color:#1e3a5f;">
+        <p style="font-size:0.85em;"><span class="highlight-red">Afternoon exceptions sit 10.9h</span> — created end-of-shift, not picked up until next morning. <span class="highlight-red">Weekend P75 = 64.7h</span> — Saturday afternoon exceptions wait until Monday.</p>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:12px;">
+        <h3>By Day of Week</h3>
+        <table style="font-size:0.85em;">
+          <thead><tr><th>Day</th><th>Exceptions</th><th>Median</th><th>P75</th></tr></thead>
+          <tbody>
+            <tr><td>Mon</td><td class="num">399</td><td class="num">6.0h</td><td class="num">11.8h</td></tr>
+            <tr><td>Tue</td><td class="num">4,551</td><td class="num">6.3h</td><td class="num">14.6h</td></tr>
+            <tr><td>Wed</td><td class="num">4,625</td><td class="num">5.7h</td><td class="num">17.4h</td></tr>
+            <tr><td>Thu</td><td class="num">4,623</td><td class="num">6.6h</td><td class="num">18.1h</td></tr>
+            <tr><td>Fri</td><td class="num">3,430</td><td class="num">7.0h</td><td class="num">17.9h</td></tr>
+            <tr style="color:#f87171;"><td>Sat</td><td class="num">3,886</td><td class="num">6.2h</td><td class="num highlight-red">64.7h</td></tr>
+            <tr style="color:#f87171;"><td>Sun</td><td class="num">40</td><td class="num highlight-red">33.1h</td><td class="num">36.6h</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <h3>Worst Windows</h3>
+        <table style="font-size:0.82em;">
+          <tr><td>Fri 3-4pm</td><td class="num highlight-red">18.2h median</td></tr>
+          <tr><td>Thu 3-5pm</td><td class="num highlight-red">14.7-16.6h</td></tr>
+          <tr><td>Sat 2-6pm</td><td class="num highlight-red">59-60h median</td></tr>
+          <tr><td>Sat 5-7am</td><td class="num highlight-red">69-72h median</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 13: SITE OUTLIERS -->
+<div class="slide" id="s8f">
+  <h3 style="color:#94a3b8;">Discovery #9</h3>
+  <h2>10x Site Variance: Best vs Worst</h2>
+  <p class="subtitle">102 sites with 100+ requests. Issue rates range from 0.2% to 30%.</p>
+  <div class="two-col" style="margin-top:10px;">
+    <div class="col">
+      <div class="chart-container" style="max-height:32vh;">
+        <canvas id="chart-site-distribution"></canvas>
+      </div>
+      <div class="card" style="margin-top:12px;">
+        <h3 style="color:#f87171;">Worst Sites (500+ requests)</h3>
+        <table style="font-size:0.82em;">
+          <thead><tr><th>Site</th><th>Volume</th><th>Redo%</th><th>Exc%</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>S32</td><td class="num">991</td><td class="num">0.5</td><td class="num highlight-red">29.5</td><td class="num highlight-red">30.0%</td></tr>
+            <tr><td>V56</td><td class="num">815</td><td class="num">1.5</td><td class="num highlight-red">17.5</td><td class="num highlight-red">19.0%</td></tr>
+            <tr><td>S66</td><td class="num">5,597</td><td class="num">3.7</td><td class="num">5.4</td><td class="num">9.1%</td></tr>
+            <tr><td>S48</td><td class="num">11,180</td><td class="num">0.7</td><td class="num">4.9</td><td class="num">5.6%</td></tr>
+            <tr><td>S38</td><td class="num">10,556</td><td class="num highlight-red">4.5</td><td class="num">0.2</td><td class="num">4.7%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card" style="margin-bottom:12px;">
+        <h3 style="color:#4ade80;">Best Sites (500+ requests)</h3>
+        <table style="font-size:0.82em;">
+          <thead><tr><th>Site</th><th>Volume</th><th>Redo%</th><th>Exc%</th><th>Total</th></tr></thead>
+          <tbody>
+            <tr><td>V23</td><td class="num">855</td><td class="num">0.0</td><td class="num">0.2</td><td class="num highlight-green">0.2%</td></tr>
+            <tr><td>V14</td><td class="num">2,432</td><td class="num">0.1</td><td class="num">0.0</td><td class="num highlight-green">0.2%</td></tr>
+            <tr><td>S62</td><td class="num">1,286</td><td class="num">0.1</td><td class="num">0.1</td><td class="num highlight-green">0.2%</td></tr>
+            <tr><td>S17</td><td class="num highlight-blue">25,969</td><td class="num">0.4</td><td class="num">0.1</td><td class="num highlight-green">0.4%</td></tr>
+            <tr><td>S0J</td><td class="num highlight-blue">11,776</td><td class="num">0.4</td><td class="num">0.2</td><td class="num highlight-green">0.6%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <h3>Distribution</h3>
+        <table style="font-size:0.82em;">
+          <thead><tr><th>Band</th><th>Sites</th><th>Volume</th></tr></thead>
+          <tbody>
+            <tr><td>&lt; 1%</td><td class="num">44</td><td class="num">158K</td></tr>
+            <tr><td>1-2%</td><td class="num">29</td><td class="num">127K</td></tr>
+            <tr><td>2-5%</td><td class="num">23</td><td class="num">4.2M</td></tr>
+            <tr><td>5%+</td><td class="num highlight-red">6</td><td class="num">20K</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="background:#0f172a;border-color:#1e3a5f;">
+        <p style="font-size:0.85em;"><span class="highlight">S17 proves it's possible</span> — 26K requests at 0.4% issue rate. The worst sites aren't volume-challenged, they have process/config issues worth investigating.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 14: TAXONOMY VS REALITY -->
+<div class="slide" id="s8">
+  <h2>Reality Check: Taxonomy vs. Production Data</h2>
+  <div style="flex:1;overflow:auto;margin-top:12px;">
+    <table>
+      <thead>
+        <tr><th>Taxonomy Claim</th><th>Production Data Says</th><th>Verdict</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>"24 new events needed across 6 stages"</td><td>422 audit types already exist; 15+ map directly to proposed events</td><td><span class="tag tag-wrong">Overbuilt</span></td></tr>
+        <tr><td>"Stage 3: Auth Review" is a discrete step</td><td>No auth review stage in Camunda BPMN. Happens within logging.</td><td><span class="tag tag-wrong">Phantom stage</span></td></tr>
+        <tr><td>"All 6 stages are human-driven"</td><td>~70% of requests auto-transition through logging in 1 sec</td><td><span class="tag tag-wrong">Wrong</span></td></tr>
+        <tr><td>"3-8x variance in fulfillment"</td><td>Actual: 1 min to 8 hrs (~500x). source_type is the driver, not EMR.</td><td><span class="tag tag-partial">Understated</span></td></tr>
+        <tr><td><code>roi.logging.patient_lookup_initiated</code> (new)</td><td><code>PatientLookupStarted/Finished/NotFound</code> &mdash; 1.3M events, 90 days</td><td><span class="tag tag-exists">Already exists</span></td></tr>
+        <tr><td>"~3.2% rework rate"</td><td><strong>13.3%</strong> for human-worked requests. 4x higher than blended.</td><td><span class="tag tag-wrong">Masked by auto-transitions</span></td></tr>
+        <tr><td>Patient lookup at ~5% of requests</td><td>11-26% by channel. 22% NotFound rate on UPLOAD.</td><td><span class="tag tag-partial">Channel-dependent</span></td></tr>
+        <tr><td>"Processor tenure / location / zone"</td><td>None of these fields exist in HealthSource. Requires HR integration.</td><td><span class="tag tag-gap">Out of scope</span></td></tr>
+        <tr><td>"EMR access events capturable"</td><td>EMR access in separate browser window (Epic/Cerner). Can't instrument.</td><td><span class="tag tag-gap">Out of scope</span></td></tr>
+        <tr><td>"&le;4 weeks to instrument"</td><td>Frontend is AngularJS 1.x. Backend is Java Spring Boot. Not trivial.</td><td><span class="tag tag-wrong">Optimistic</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="quote" style="margin-top:12px;">
+    The taxonomy describes a business process. The data describes a system. They're not the same thing.
+  </div>
+</div>
+
+<!-- SLIDE 18: WHERE THE HOURS BURN -->
+<div class="slide" id="sheat">
+  <h2>Where the Hours Burn</h2>
+  <p class="subtitle">Every request journey decomposed &mdash; <span style="color:#4ade80;">green</span> is human work, <span style="color:#f87171;">red</span> is queue wait, <span style="color:#fcd34d;">yellow</span> is hold</p>
+  <div style="margin:12px 0 0 0;">
+    <div style="font-size:0.72em;color:#475569;margin-bottom:14px;padding-left:152px;">
+      FTI measured ~7 min of active work per request. We measured the full lifecycle around it.
+    </div>
+    <!-- Clean Pass -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+      <div style="width:140px;text-align:right;flex-shrink:0;">
+        <div style="font-weight:700;color:#4ade80;font-size:0.92em;">Clean Pass</div>
+        <div style="font-size:0.72em;color:#64748b;">81.4% &middot; 658K reqs</div>
+      </div>
+      <div style="flex:1;display:flex;height:38px;border-radius:6px;overflow:hidden;gap:1px;">
+        <div style="flex:75;background:#166534;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.75em;font-weight:600;color:#4ade80;">Logging 2.1h</span></div>
+        <div style="flex:6;background:#1e3a5f;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.6em;color:#60a5fa;">QC</span></div>
+        <div style="flex:19;background:#1e293b;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.6em;color:#64748b;">transit</span></div>
+      </div>
+      <div style="width:90px;text-align:right;flex-shrink:0;">
+        <div style="font-weight:700;color:#4ade80;font-size:1.15em;">2.8h</div>
+        <div style="font-size:0.68em;color:#94a3b8;">mostly work</div>
+      </div>
+    </div>
+    <!-- Had Redo -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+      <div style="width:140px;text-align:right;flex-shrink:0;">
+        <div style="font-weight:700;color:#f87171;font-size:0.92em;">Had Redo</div>
+        <div style="font-size:0.72em;color:#64748b;">13.3% &middot; 108K reqs</div>
+      </div>
+      <div style="flex:1;display:flex;height:38px;border-radius:6px;overflow:hidden;gap:1px;">
+        <div style="flex:8;background:#166534;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.65em;font-weight:600;color:#4ade80;">Log</span></div>
+        <div style="flex:58;background:#7f1d1d;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.75em;font-weight:700;color:#fca5a5;">Exception Queue 6.9h</span></div>
+        <div style="flex:5;background:#166534;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.6em;color:#4ade80;">Redo</span></div>
+        <div style="flex:29;background:#1e293b;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.6em;color:#64748b;">QC + transit</span></div>
+      </div>
+      <div style="width:90px;text-align:right;flex-shrink:0;">
+        <div style="font-weight:700;color:#f87171;font-size:1.15em;">11.9h</div>
+        <div style="font-size:0.68em;color:#fca5a5;">only 13% active</div>
+      </div>
+    </div>
+    <!-- Had Exception -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+      <div style="width:140px;text-align:right;flex-shrink:0;">
+        <div style="font-weight:700;color:#f97316;font-size:0.92em;">Had Exception</div>
+        <div style="font-size:0.72em;color:#64748b;">11.1% &middot; 90K reqs</div>
+      </div>
+      <div style="flex:1;display:flex;height:38px;border-radius:6px;overflow:hidden;gap:1px;">
+        <div style="flex:9;background:#166534;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.65em;font-weight:600;color:#4ade80;">Log</span></div>
+        <div style="flex:40;background:#92400e;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.75em;font-weight:700;color:#fcd34d;">Exception Hold 7.4h</span></div>
+        <div style="flex:51;background:#1e293b;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.6em;color:#64748b;">resolution + remaining</span></div>
+      </div>
+      <div style="width:90px;text-align:right;flex-shrink:0;">
+        <div style="font-weight:700;color:#f97316;font-size:1.15em;">18.5h</div>
+        <div style="font-size:0.68em;color:#fcd34d;">only 9% active</div>
+      </div>
+    </div>
+    <!-- Sent Back -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
+      <div style="width:140px;text-align:right;flex-shrink:0;">
+        <div style="font-weight:700;color:#dc2626;font-size:0.92em;">Sent Back</div>
+        <div style="font-size:0.72em;color:#64748b;">0.8% &middot; 6.4K reqs</div>
+      </div>
+      <div style="flex:1;display:flex;height:38px;border-radius:6px;overflow:hidden;gap:1px;">
+        <div style="flex:28;background:#166534;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.72em;font-weight:600;color:#4ade80;">Active 12.4h</span></div>
+        <div style="flex:16;background:#92400e;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.65em;font-weight:600;color:#fcd34d;">Hold</span></div>
+        <div style="flex:56;background:#7f1d1d;display:flex;align-items:center;justify-content:center;"><span style="font-size:0.75em;font-weight:700;color:#fca5a5;">Queue Gaps ~25h</span></div>
+      </div>
+      <div style="width:90px;text-align:right;flex-shrink:0;">
+        <div style="font-weight:700;color:#dc2626;font-size:1.15em;">44.2h</div>
+        <div style="font-size:0.68em;color:#fca5a5;">only 28% active</div>
+      </div>
+    </div>
+    <div style="margin-top:6px;font-size:0.78em;color:#64748b;padding-left:152px;">
+      Above = logging journey. Fulfillment adds 3&ndash;20h more. Fulfillment exceptions wait <span style="color:#f87171;font-weight:600;">20.1h median</span> &mdash; the longest single queue.
+    </div>
+  </div>
+  <div class="four-col" style="margin-top:18px;">
+    <div class="card" style="border-top:3px solid #f87171;padding:14px;">
+      <div style="font-size:2em;font-weight:700;color:#f87171;line-height:1;">3,222</div>
+      <div class="big-label">FTE-equiv/yr burn in exception queues</div>
+    </div>
+    <div class="card" style="border-top:3px solid #facc15;padding:14px;">
+      <div style="font-size:2em;font-weight:700;color:#facc15;line-height:1;">99.1%</div>
+      <div class="big-label">of QC Verify conflicts are false positives</div>
+    </div>
+    <div class="card" style="border-top:3px solid #f97316;padding:14px;">
+      <div style="font-size:2em;font-weight:700;color:#f97316;line-height:1;">45%</div>
+      <div class="big-label">of resubmissions are automatable</div>
+    </div>
+    <div class="card" style="border-top:3px solid #a78bfa;padding:14px;">
+      <div style="font-size:2em;font-weight:700;color:#a78bfa;line-height:1;">4.8&times;</div>
+      <div class="big-label">longer for weekend exceptions</div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 19: THE FIX MAP -->
+<div class="slide" id="sfixmap">
+  <h2>The Fix Map: Impact &times; Effort</h2>
+  <p class="subtitle">Top-left = gold. Every item uses data we already have &mdash; zero new instrumentation.</p>
+  <div style="display:grid;grid-template-columns:3fr 2fr;gap:24px;flex:1;margin-top:8px;min-height:0;">
+    <div style="position:relative;min-height:0;">
+      <canvas id="chart-fixmap"></canvas>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;overflow-y:auto;">
+      <table style="font-size:0.82em;">
+        <thead><tr><th>Opportunity</th><th class="num">Wks</th><th class="num">FTEs/yr</th></tr></thead>
+        <tbody>
+          <tr style="background:#1a2e1a;"><td><span style="color:#4ade80;font-weight:600;">&#9679;</span> Weekend Triage</td><td class="num">1</td><td class="num" style="color:#4ade80;font-weight:600;">~420</td></tr>
+          <tr style="background:#1a2e1a;"><td><span style="color:#4ade80;font-weight:600;">&#9679;</span> Verify FP Filter</td><td class="num">2</td><td class="num">~50*</td></tr>
+          <tr><td><span style="color:#facc15;font-weight:600;">&#9679;</span> Exception Queue SLA</td><td class="num">4</td><td class="num" style="color:#facc15;font-weight:600;">~640</td></tr>
+          <tr><td><span style="color:#facc15;font-weight:600;">&#9679;</span> Pre-Validation Gate</td><td class="num">5</td><td class="num" style="color:#facc15;font-weight:600;">~380</td></tr>
+          <tr><td><span style="color:#facc15;font-weight:600;">&#9679;</span> Site Dashboards</td><td class="num">3</td><td class="num">~30</td></tr>
+          <tr style="background:#2d1b1b;"><td><span style="color:#f87171;font-weight:600;">&#9679;</span> Auto-Route Resubs</td><td class="num">8</td><td class="num" style="color:#f87171;font-weight:600;">~700</td></tr>
+        </tbody>
+      </table>
+      <p style="font-size:0.68em;color:#64748b;">* 50 FTEs direct + 340K fewer QC reviews/qtr</p>
+      <div class="card" style="background:#0f172a;border:1px solid #1e3a5f;padding:14px;">
+        <p style="font-size:0.88em;color:#cbd5e1;margin:0;"><strong style="color:#facc15;">Weekend Triage + Queue SLA</strong><br><span class="highlight">~1,060 FTEs reclaimed</span> &middot; 5 weeks total &middot; zero telemetry</p>
+      </div>
+      <div class="quote" style="font-size:0.82em;margin:0;">
+        Every item above uses data we already have.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 9: RECOMMENDED PATH -->
+<div class="slide" id="s9">
+  <h2>Recommended Path Forward</h2>
+  <div class="three-col" style="margin-top:20px;">
+    <div class="card">
+      <h3 style="color:#4ade80;">Phase 0: Dashboards (Now)</h3>
+      <p style="font-size:0.9em;">Build on <strong>existing data</strong> &mdash; zero instrumentation:</p>
+      <ul style="font-size:0.85em;margin-top:8px;">
+        <li>Logging TAT by channel &times; major class</li>
+        <li>Rework rates (human-worked only!)</li>
+        <li>Exception frequency and duration</li>
+        <li>Patient lookup NotFound rates</li>
+        <li>End-to-end cycle time by segment</li>
+        <li>Fulfillment TAT by source type</li>
+      </ul>
+      <p style="margin-top:10px;font-size:0.85em;color:#94a3b8;"><strong>Cost:</strong> SQL + Sigma/Looker dashboards<br><strong>Time:</strong> 1-2 weeks<br><strong>Impact:</strong> Immediate visibility</p>
+    </div>
+    <div class="card">
+      <h3 style="color:#facc15;">Phase 1: Quick Wins (2-4 weeks)</h3>
+      <p style="font-size:0.9em;">Fix known issues — <strong>no new telemetry needed</strong>:</p>
+      <ul style="font-size:0.85em;margin-top:8px;">
+        <li><strong>Pre-validation:</strong> Check address + patient name before workflow (fixes 36-70% of Field Input / Invalid exceptions)</li>
+        <li><strong>Verify tuning:</strong> Filter doctor/nurse + medical terms from name matching (reduces 69% false positives)</li>
+        <li><strong>Auto-routing:</strong> DAR relog, site moves, pull list (eliminates ~24% of resubmissions)</li>
+      </ul>
+      <p style="margin-top:10px;font-size:0.85em;color:#94a3b8;"><strong>Scope:</strong> UPLOAD + CENTRAL INTAKE only<br><strong>Impact:</strong> Reduce queue time by preventing rework<br><strong>Justification:</strong> Data already proves these are the causes</p>
+    </div>
+    <div class="card">
+      <h3 style="color:#60a5fa;">Phase 2: Targeted Instrumentation</h3>
+      <p style="font-size:0.9em;">6-8 net-new events for <strong>actual gaps</strong>:</p>
+      <ul style="font-size:0.85em;margin-top:8px;">
+        <li>STORK edit tracking (what ADE got wrong)</li>
+        <li>Intra-session form field timing</li>
+        <li>Chart image rejection root causes</li>
+        <li>Processor active/idle time (tab focus)</li>
+      </ul>
+      <p style="margin-top:10px;font-size:0.85em;color:#94a3b8;"><strong>Prerequisite:</strong> Phase 0-1 validated<br><strong>Justification:</strong> Data-driven, not speculative<br><strong>Avoid:</strong> 7-9 weeks of plumbing first</p>
+    </div>
+  </div>
+  <div class="quote" style="margin-top:20px;">
+    Start with what you have. Instrument what you can't see. Build infrastructure when you've proven the value.
+  </div>
+</div>
+
+<!-- SLIDE 10: APPENDIX -->
+<div class="slide" id="s10">
+  <h2>Appendix: Data Sources & Reproducibility</h2>
+  <div class="two-col" style="margin-top:12px;">
+    <div class="col">
+      <div class="card" style="margin-bottom:14px;">
+        <h3>Snowflake Access</h3>
+        <p style="font-size:0.88em;">
+          <strong>Role:</strong> <code>ENG_PROVIDER</code><br>
+          <strong>Warehouse:</strong> <code>ENG_PROVIDER</code><br>
+          <strong>Database:</strong> <code>HEALTHSOURCE</code><br>
+          <strong>Schema:</strong> <code>CONNEX</code><br>
+          <strong>Auth:</strong> SSO (externalbrowser)
+        </p>
+      </div>
+      <div class="card">
+        <h3>Key Tables</h3>
+        <table style="font-size:0.82em;">
+          <tr><td><code>erequest_status_dynamic</code></td><td>Every status transition</td></tr>
+          <tr><td><code>request_status</code></td><td>Status ID &rarr; name</td></tr>
+          <tr><td><code>erequest_audit_trail_dynamic</code></td><td>422 audit event types</td></tr>
+          <tr><td><code>erequest_dynamic</code></td><td>Request metadata</td></tr>
+          <tr><td><code>erequest_exception</code></td><td>Exception details</td></tr>
+          <tr><td><code>erequest_qc_conflicts</code></td><td>Verify conflict data (structured)</td></tr>
+          <tr><td><code>erequest_qc_action</code></td><td>Reviewer actions on conflicts</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <h3>Queries Run (all reproducible)</h3>
+        <table style="font-size:0.82em;">
+          <tr><td>Q0</td><td>Status frequency sanity check</td></tr>
+          <tr><td>Q1</td><td>Logging TAT by channel &times; major class</td></tr>
+          <tr><td>Q2</td><td>Fulfillment TAT by channel &times; EMR</td></tr>
+          <tr><td>Q3</td><td>End-to-end cycle time</td></tr>
+          <tr><td>Q4</td><td>Audit sub-events during logging windows</td></tr>
+          <tr><td>Q5</td><td>Rework rates (all requests)</td></tr>
+          <tr><td>Q5b</td><td>Rework rates (human-worked only)</td></tr>
+          <tr><td>Q6</td><td>Hold/exception durations</td></tr>
+          <tr><td>Q7</td><td>Human logging time distribution</td></tr>
+          <tr><td>Q8</td><td>Patient lookup coverage by channel</td></tr>
+          <tr><td>Q9</td><td>Patient lookup timing &amp; failure rates</td></tr>
+          <tr><td>Q10</td><td>Full audit type inventory (422 types)</td></tr>
+          <tr><td>Q11-Q18</td><td>Fulfillment, exceptions, touch vs wait</td></tr>
+          <tr><td>Q19-Q25</td><td>QC triggers, rework causes, Verify conflicts</td></tr>
+        </table>
+        <p style="font-size:0.82em;margin-top:10px;color:#94a3b8;">
+          Full analysis: <code>scratchpad/event-telemetry-analysis.md</code><br>
+          SQL files: <code>scratchpad/telemetry-deck/queries/</code><br>
+          dbt models: <code>data-warehouse/.../staging/healthsource/</code>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end deck -->
+
+<div class="nav">
+  <button id="prev" onclick="navigate(-1)">&larr; Prev</button>
+  <button id="next" onclick="navigate(1)">Next &rarr;</button>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+
+function navigate(dir) {
+  slides[current].classList.remove('active');
+  current = Math.max(0, Math.min(total - 1, current + dir));
+  slides[current].classList.add('active');
+  slides[current].classList.add('fade-in');
+  setTimeout(() => slides[current].classList.remove('fade-in'), 400);
+  updateUI();
+  initCharts();
+}
+
+function updateUI() {
+  document.getElementById('prev').disabled = current === 0;
+  document.getElementById('next').disabled = current === total - 1;
+  document.getElementById('progress').style.width = ((current + 1) / total * 100) + '%';
+  document.getElementById('slideNum').textContent = (current + 1) + ' / ' + total;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); navigate(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); navigate(-1); }
+});
+
+let chartsInitialized = {};
+
+function initCharts() {
+  // idx 2: FTI Benchmark (NEW)
+  if (current === 2 && !chartsInitialized[2]) {
+    chartsInitialized[2] = true;
+    // FTI touch time by major class
+    new Chart(document.getElementById('chart-fti-touch'), {
+      type: 'bar',
+      data: {
+        labels: ['CLIN', 'INS', 'PAT', 'GOV', 'ATTY', 'COPY', 'FAC'],
+        datasets: [{
+          label: 'FTI Touch Time (min)',
+          data: [4.6, 6.3, 6.8, 7.0, 8.4, 8.4, 9.5],
+          backgroundColor: ['#4ade80','#60a5fa','#60a5fa','#60a5fa','#f87171','#f87171','#f87171'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'FTI Observed Touch Time (minutes)', color: '#94a3b8', font: { size: 11 } }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Minutes', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' }, max: 12 },
+          y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+        }
+      }
+    });
+    // Snowflake wall-clock by major class (logging only, human-worked)
+    new Chart(document.getElementById('chart-sf-wall'), {
+      type: 'bar',
+      data: {
+        labels: ['CLIN', 'PAT', 'COPY', 'INS', 'GOV', 'ATTY'],
+        datasets: [{
+          label: 'Snowflake Wall-Clock (hours)',
+          data: [2.4, 3.0, 3.0, 4.6, 5.5, 8.3],
+          backgroundColor: ['#4ade80','#60a5fa','#60a5fa','#60a5fa','#f87171','#f87171'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Snowflake Median Wall-Clock Logging (hours)', color: '#94a3b8', font: { size: 11 } }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Hours', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' }, max: 10 },
+          y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  // idx 3: Two populations
+  if (current === 3 && !chartsInitialized[3]) {
+    chartsInitialized[3] = true;
+    new Chart(document.getElementById('chart-populations'), {
+      type: 'bar',
+      data: {
+        labels: ['ELECTRONIC', 'PULLLIST', 'MANUAL', 'CENTRAL\nINTAKE', 'UPLOAD'],
+        datasets: [{
+          label: 'Median Logging Time (seconds)',
+          data: [1, 1, 1, 958, 1150],
+          backgroundColor: ['#4ade80', '#4ade80', '#4ade80', '#f87171', '#f87171'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Median Logging Duration by Source Type (CLIN)', color: '#94a3b8', font: { size: 13 } }
+        },
+        scales: {
+          y: { type: 'logarithmic', title: { display: true, text: 'Seconds (log scale)', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+          x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  // idx 4: Logging distribution
+  if (current === 4 && !chartsInitialized[4]) {
+    chartsInitialized[4] = true;
+    new Chart(document.getElementById('chart-distribution'), {
+      type: 'bar',
+      data: {
+        labels: ['<1m', '1-5m', '5-10m', '10-30m', '30-60m', '1-2h', '2-4h', '4-8h', '8-24h'],
+        datasets: [{
+          label: 'CLIN Requests',
+          data: [13210, 44324, 15821, 18644, 11462, 11596, 12318, 11446, 27620],
+          backgroundColor: '#3b82f6',
+          borderRadius: 4
+        }, {
+          label: 'ATTY Requests',
+          data: [2365, 6653, 2863, 4392, 3985, 4729, 5664, 6945, 13878],
+          backgroundColor: '#f97316',
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#94a3b8' } },
+          title: { display: true, text: 'Logging Time Distribution (Human-Worked Requests)', color: '#94a3b8', font: { size: 13 } }
+        },
+        scales: {
+          y: { title: { display: true, text: 'Request Count', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+          x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+        }
+      }
+    });
+  }
+
+  // idx 5: Fulfillment TAT
+  if (current === 5 && !chartsInitialized[5]) {
+    chartsInitialized[5] = true;
+    new Chart(document.getElementById('chart-fulfillment'), {
+      type: 'bar',
+      data: {
+        labels: ['CLIN', 'GOV', 'PAT', 'INS', 'ATTY', 'COPY'],
+        datasets: [{
+          label: 'Median (hours)',
+          data: [3.0, 12.7, 15.4, 16.2, 19.7, 19.8],
+          backgroundColor: ['#4ade80', '#60a5fa', '#60a5fa', '#60a5fa', '#f87171', '#f87171'],
+          borderRadius: 4
+        }, {
+          label: 'P75 (hours)',
+          data: [20.0, 26.7, 26.5, 29.4, 43.1, 42.6],
+          backgroundColor: ['#166534', '#1e3a5f', '#1e3a5f', '#1e3a5f', '#7f1d1d', '#7f1d1d'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { labels: { color: '#94a3b8' } },
+          title: { display: true, text: 'Fulfillment Time by Major Class (UPLOAD, no-EMR)', color: '#94a3b8', font: { size: 13 } }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Hours', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+          y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 12 } } }
+        }
+      }
+    });
+  }
+
+  // idx 7: Patient lookup coverage
+  if (current === 7 && !chartsInitialized[7]) {
+    chartsInitialized[7] = true;
+    new Chart(document.getElementById('chart-lookup'), {
+      type: 'bar',
+      data: {
+        labels: ['MANUAL', 'EMAIL', 'UPLOAD', 'CENTRAL\nINTAKE', 'PULLLIST', 'ELECTRONIC'],
+        datasets: [{
+          label: '% With Patient Lookup',
+          data: [25.9, 20.3, 11.6, 10.8, 7.9, 6.1],
+          backgroundColor: ['#60a5fa', '#60a5fa', '#f87171', '#f87171', '#4ade80', '#4ade80'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Patient Lookup Trigger Rate by Channel', color: '#94a3b8', font: { size: 13 } }
+        },
+        scales: {
+          x: { title: { display: true, text: '% of Requests', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' }, max: 30 },
+          y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  // idx 8: Rework rate
+  if (current === 8 && !chartsInitialized[8]) {
+    chartsInitialized[8] = true;
+    new Chart(document.getElementById('chart-rework'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Clean pass (81.4%)', 'Had redo (13.3%)', 'Other (2.3%)', 'Exception (2.1%)', 'Sent back (0.8%)'],
+        datasets: [{
+          data: [657944, 107790, 18807, 17328, 6606],
+          backgroundColor: ['#4ade80', '#f87171', '#94a3b8', '#f97316', '#facc15'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 12, font: { size: 11 } } },
+          title: { display: true, text: 'Human-Worked Logging Journeys (UPLOAD + CENTRAL INTAKE)', color: '#94a3b8', font: { size: 12 } }
+        }
+      }
+    });
+  }
+
+  // idx 9: Rework cost (NEW)
+  if (current === 9 && !chartsInitialized[9]) {
+    chartsInitialized[9] = true;
+    new Chart(document.getElementById('chart-rework-cost'), {
+      type: 'bar',
+      data: {
+        labels: ['Clean Pass', 'Had Redo', 'Had Exception', 'Sent Back'],
+        datasets: [
+          { label: 'Active Work (hrs)', data: [2.8, 1.5, 1.7, 12.4], backgroundColor: '#4ade80', borderRadius: 4 },
+          { label: 'Queue Time (hrs)', data: [0, 10.4, 16.8, 31.8], backgroundColor: '#f87171', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 }, padding: 8 } },
+          title: { display: true, text: 'Active Work vs Queue Time per Request (median hours)', color: '#94a3b8', font: { size: 11 } }
+        },
+        scales: {
+          x: { stacked: true, title: { display: true, text: 'Hours', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+          y: { stacked: true, grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  // idx 10: Exceptions decoded
+  if (current === 10 && !chartsInitialized[10]) {
+    chartsInitialized[10] = true;
+    new Chart(document.getElementById('chart-exceptions'), {
+      type: 'bar',
+      data: {
+        labels: [
+          'Clinic', 'Field Input\nRequired', 'Global Field\nInput', 'Internal\nDept',
+          'Supervisor\nReview', 'Invalid/\nIncomplete', 'Requester ID\nMissing',
+          'Microfiche', 'HIMD Review', 'Cross-\nCoverage'
+        ],
+        datasets: [{
+          label: 'Exception Count (90d)',
+          data: [78520, 67470, 45463, 45380, 32485, 30016, 11250, 8819, 7862, 7832],
+          backgroundColor: [
+            '#f87171', '#facc15', '#facc15', '#60a5fa', '#60a5fa',
+            '#f97316', '#f97316', '#94a3b8', '#94a3b8', '#94a3b8'
+          ],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Top 10 Exception Reasons (Human-Worked, 90 days)', color: '#94a3b8', font: { size: 13 } }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Count', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+          y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  // idx 11: Touch time vs wait time
+  if (current === 11 && !chartsInitialized[11]) {
+    chartsInitialized[11] = true;
+    new Chart(document.getElementById('chart-happy-path'), {
+      type: 'bar',
+      data: {
+        labels: ['Clean Pass (2.8h total)'],
+        datasets: [
+          { label: 'Logging (2.1h)', data: [2.1], backgroundColor: '#4ade80', borderRadius: 4 },
+          { label: 'QC (10m)', data: [0.17], backgroundColor: '#60a5fa', borderRadius: 4 },
+          { label: 'Indexing (1m)', data: [0.02], backgroundColor: '#818cf8', borderRadius: 4 },
+          { label: 'Transit/Other (32m)', data: [0.53], backgroundColor: '#334155', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 }, padding: 8 } },
+          title: { display: false }
+        },
+        scales: {
+          x: { stacked: true, title: { display: true, text: 'Hours', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+          y: { stacked: true, grid: { display: false }, ticks: { color: '#e2e8f0', font: { size: 12, weight: '600' } } }
+        }
+      }
+    });
+    new Chart(document.getElementById('chart-touch-wait'), {
+      type: 'bar',
+      data: {
+        labels: ['Clean Pass', 'Had Redo', 'Had Exception', 'Sent Back'],
+        datasets: [
+          { label: 'Active Work', data: [2.8, 1.5, 1.7, 12.4], backgroundColor: '#4ade80', borderRadius: 4 },
+          { label: 'Queue / Wait', data: [0, 10.4, 0, 25.0], backgroundColor: '#f87171', borderRadius: 4 },
+          { label: 'Hold / Exception', data: [0, 0, 7.4, 6.9], backgroundColor: '#facc15', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 }, padding: 8 } },
+          title: { display: true, text: 'Time Decomposition by Journey Type (median hours)', color: '#94a3b8', font: { size: 12 } }
+        },
+        scales: {
+          x: { stacked: true, title: { display: true, text: 'Hours', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+          y: { stacked: true, grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  // idx 12: Queue cost (NEW)
+  if (current === 12 && !chartsInitialized[12]) {
+    chartsInitialized[12] = true;
+    new Chart(document.getElementById('chart-queue-cost'), {
+      type: 'bar',
+      data: {
+        labels: ['Exception Queues', 'Weekend Excess', 'Rework Touch', 'QC FP Review'],
+        datasets: [{
+          label: 'FTE-Equivalents (annual)',
+          data: [3222, 842, 148, 5.8],
+          backgroundColor: ['#f87171', '#facc15', '#f97316', '#60a5fa'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Annual FTE-Equivalent Waste by Category', color: '#94a3b8', font: { size: 11 } }
+        },
+        scales: {
+          x: { type: 'logarithmic', title: { display: true, text: 'FTE-Equivalents (log scale)', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+          y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 11 } } }
+        }
+      }
+    });
+  }
+
+  // idx 13: Resubmission reasons
+  if (current === 13 && !chartsInitialized[13]) {
+    chartsInitialized[13] = true;
+    new Chart(document.getElementById('chart-resubmit-reasons'), {
+      type: 'bar',
+      data: {
+        labels: ['Patient/MRN', 'Site/Location', 'Continuity of Care', 'DAR/Relog', 'Split/Multiple', 'Short Code', 'Billing/Fee', 'Second Review', 'No Reason', 'Pull List'],
+        datasets: [{
+          label: 'Count',
+          data: [21440, 20728, 15791, 13036, 11752, 10975, 6900, 5806, 3530, 3462],
+          backgroundColor: ['#4ade80','#4ade80','#facc15','#4ade80','#facc15','#64748b','#facc15','#f87171','#64748b','#4ade80'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Resubmission Reasons (90 days, human-worked)', color: '#94a3b8', font: { size: 11 } }
+        },
+        scales: {
+          x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', callback: v => (v/1000)+'K' } },
+          y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  // idx 14: QC Verify ignore reasons
+  if (current === 14 && !chartsInitialized[14]) {
+    chartsInitialized[14] = true;
+    new Chart(document.getElementById('chart-ignore-reasons'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Valid Name/DOB/DOS', 'Medical terminology', 'Other', 'Doctor/Nurse', 'Not a DOB', 'Maiden name', 'Not a DOS'],
+        datasets: [{
+          data: [44.1, 25.3, 11.0, 9.6, 9.0, 0.6, 0.3],
+          backgroundColor: ['#4ade80','#60a5fa','#64748b','#a78bfa','#facc15','#f472b6','#94a3b8'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 10 }, padding: 6 } }
+        }
+      }
+    });
+  }
+
+  // idx 15: Temporal patterns
+  if (current === 15 && !chartsInitialized[15]) {
+    chartsInitialized[15] = true;
+    new Chart(document.getElementById('chart-temporal-shift'), {
+      type: 'bar',
+      data: {
+        labels: ['Morning\n(8a-2p)', 'Overnight\n(12a-8a)', 'Evening\n(6p-12a)', 'Weekend', 'Afternoon\n(2p-6p)'],
+        datasets: [
+          { label: 'Median (hrs)', data: [3.7, 6.0, 6.4, 6.6, 10.9], backgroundColor: '#60a5fa', borderRadius: 4 },
+          { label: 'P75 (hrs)', data: [15.8, 12.3, 10.9, 64.7, 19.2], backgroundColor: '#f87171', borderRadius: 4 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94a3b8', font: { size: 10 }, padding: 8 } },
+          title: { display: true, text: 'Exception Queue Duration by Shift', color: '#94a3b8', font: { size: 11 } }
+        },
+        scales: {
+          x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+          y: { title: { display: true, text: 'Hours', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+        }
+      }
+    });
+  }
+
+  // idx 16: Site distribution
+  if (current === 16 && !chartsInitialized[16]) {
+    chartsInitialized[16] = true;
+    new Chart(document.getElementById('chart-site-distribution'), {
+      type: 'bar',
+      data: {
+        labels: ['< 1%', '1-2%', '2-5%', '5-10%', '10-20%', '20%+'],
+        datasets: [{
+          label: 'Number of sites',
+          data: [44, 29, 23, 3, 1, 2],
+          backgroundColor: ['#4ade80','#4ade80','#facc15','#f87171','#f87171','#f87171'],
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Sites by Combined Issue Rate Band', color: '#94a3b8', font: { size: 11 } }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Issue Rate', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+          y: { title: { display: true, text: '# Sites', color: '#94a3b8' }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+        }
+      }
+    });
+  }
+
+  // idx 19: Fix Map (bubble chart)
+  if (current === 19 && !chartsInitialized[19]) {
+    chartsInitialized[19] = true;
+    new Chart(document.getElementById('chart-fixmap'), {
+      type: 'bubble',
+      data: {
+        datasets: [
+          {
+            label: 'Quick Wins (1-2 wk)',
+            data: [{x: 1, y: 420, r: 24}, {x: 2, y: 50, r: 15}],
+            backgroundColor: 'rgba(74, 222, 128, 0.5)',
+            borderColor: '#4ade80', borderWidth: 2,
+            hoverBackgroundColor: 'rgba(74, 222, 128, 0.7)'
+          },
+          {
+            label: 'Medium (3-5 wk)',
+            data: [{x: 4, y: 640, r: 22}, {x: 5, y: 380, r: 20}, {x: 3, y: 30, r: 12}],
+            backgroundColor: 'rgba(250, 204, 21, 0.5)',
+            borderColor: '#facc15', borderWidth: 2,
+            hoverBackgroundColor: 'rgba(250, 204, 21, 0.7)'
+          },
+          {
+            label: 'Larger (6+ wk)',
+            data: [{x: 8, y: 700, r: 20}],
+            backgroundColor: 'rgba(248, 113, 113, 0.5)',
+            borderColor: '#f87171', borderWidth: 2,
+            hoverBackgroundColor: 'rgba(248, 113, 113, 0.7)'
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        layout: { padding: { top: 28, right: 12 } },
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94a3b8', font: {size: 11}, padding: 14, usePointStyle: true, pointStyle: 'circle' } },
+          tooltip: { backgroundColor: '#1e293b', titleColor: '#e2e8f0', bodyColor: '#cbd5e1', borderColor: '#334155', borderWidth: 1, padding: 10, callbacks: { label: function(ctx) {
+            var n = [['Weekend Triage','Verify FP Filter'],['Queue SLA','Pre-Validation','Site Dashboards'],['Auto-Route Resubs']];
+            return n[ctx.datasetIndex][ctx.dataIndex] + ': ~' + ctx.raw.y + ' FTEs/yr, ' + ctx.raw.x + ' wk';
+          }}}
+        },
+        scales: {
+          x: { title: { display: true, text: 'Engineering Effort (weeks)', color: '#64748b', font: {size: 11} }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', stepSize: 1 }, min: 0, max: 10 },
+          y: { title: { display: true, text: 'Annual FTE-Equivalents Saved', color: '#64748b', font: {size: 11} }, grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' }, min: -30, max: 780 }
+        }
+      },
+      plugins: [{
+        id: 'quadrants',
+        beforeDatasetsDraw: function(chart) {
+          var ctx = chart.ctx, xA = chart.scales.x, yA = chart.scales.y;
+          var mx = xA.getPixelForValue(3);
+          ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle = '#334155'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.moveTo(mx, yA.top); ctx.lineTo(mx, yA.bottom); ctx.stroke();
+          ctx.restore();
+          ctx.fillStyle = '#475569'; ctx.font = '700 11px -apple-system, system-ui, sans-serif';
+          ctx.textAlign = 'left'; ctx.fillText('QUICK WINS', xA.left + 6, yA.top - 10);
+          ctx.textAlign = 'right'; ctx.fillText('BIG BETS', xA.right - 6, yA.top - 10);
+        }
+      }, {
+        id: 'bubbleLabels',
+        afterDatasetsDraw: function(chart) {
+          var ctx = chart.ctx;
+          var labels = [
+            [{t:'Weekend',dy:-2},{t:'Verify FP',dy:0}],
+            [{t:'Queue SLA',dy:-2},{t:'Pre-Val',dy:0},{t:'Sites',dy:0}],
+            [{t:'Auto-Route',dy:0}]
+          ];
+          chart.data.datasets.forEach(function(ds, i) {
+            chart.getDatasetMeta(i).data.forEach(function(el, j) {
+              var lbl = labels[i][j]; if (!lbl) return;
+              ctx.fillStyle = '#fff'; ctx.font = '700 10px -apple-system, system-ui, sans-serif';
+              ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+              ctx.fillText(lbl.t, el.x, el.y + lbl.dy);
+            });
+          });
+        }
+      }]
+    });
+  }
+}
+
+updateUI();
+
+// SQL reveals — injected programmatically to keep slide HTML clean
+const sqlReveals = {
+  's2': { label: 'Q1: Logging TAT', sql: `-- Q1: Logging TAT by channel x major_class
+-- HEALTHSOURCE.CONNEX · 90 days
+with status_transitions as (
+    select es.erequest_id, rs.status_desc, es.state_timestamp,
+        lead(es.state_timestamp) over (
+            partition by es.erequest_id order by es.state_timestamp
+        ) as next_state_timestamp
+    from connex.erequest_status_dynamic es
+    join connex.request_status rs on es.status_id = rs.status_id
+    where es.state_timestamp >= dateadd('day', -90, current_date())
+)
+select e.major_class, e.source_type, count(*) as request_count,
+    round(median(datediff('second', st.state_timestamp, st.next_state_timestamp)), 1) as median_sec,
+    round(percentile_cont(0.25) within group (order by datediff('second', st.state_timestamp, st.next_state_timestamp)), 1) as p25_sec,
+    round(percentile_cont(0.75) within group (order by datediff('second', st.state_timestamp, st.next_state_timestamp)), 1) as p75_sec
+from status_transitions st
+join connex.erequest_dynamic e on st.erequest_id = e.erequest_id
+where st.status_desc = 'Logging'
+  and st.next_state_timestamp is not null
+  and datediff('second', st.state_timestamp, st.next_state_timestamp) between 1 and 86400
+group by e.major_class, e.source_type
+having count(*) >= 10
+order by request_count desc;` },
+
+  's3': { label: 'Q1: Logging TAT (same query, grouped by major_class)', sql: `-- Same as Q1 — group by major_class for human-worked channels
+-- Filter: source_type IN ('UPLOAD', 'CENTRAL INTAKE')` },
+
+  's3b': { label: 'Q2: Fulfillment TAT', sql: `-- Q2: Fulfillment TAT by channel x EMR
+with status_transitions as (
+    select es.erequest_id, rs.status_desc, es.state_timestamp,
+        lead(es.state_timestamp) over (
+            partition by es.erequest_id order by es.state_timestamp
+        ) as next_state_timestamp
+    from connex.erequest_status_dynamic es
+    join connex.request_status rs on es.status_id = rs.status_id
+    where es.state_timestamp >= dateadd('day', -90, current_date())
+)
+select e.major_class, e.source_type, e.is_emr, count(*) as request_count,
+    round(median(datediff('second', st.state_timestamp, st.next_state_timestamp)), 1) as median_sec,
+    round(percentile_cont(0.75) within group (order by datediff('second', st.state_timestamp, st.next_state_timestamp)), 1) as p75_sec,
+    round(percentile_cont(0.95) within group (order by datediff('second', st.state_timestamp, st.next_state_timestamp)), 1) as p95_sec
+from status_transitions st
+join connex.erequest_dynamic e on st.erequest_id = e.erequest_id
+where st.status_desc = 'Fulfillment'
+  and st.next_state_timestamp is not null
+  and datediff('second', st.state_timestamp, st.next_state_timestamp) between 1 and 86400
+group by e.major_class, e.source_type, e.is_emr
+having count(*) >= 10
+order by request_count desc;` },
+
+  's4': { label: 'Q10: Audit Event Inventory', sql: `-- Q10: Full inventory of 422 audit event types
+select audit_type, count(*) as event_count,
+    count(distinct erequest_id) as unique_requests,
+    min(event_dt) as earliest, max(event_dt) as latest
+from connex.erequest_audit_trail_dynamic
+where event_dt >= dateadd('day', -90, current_date())
+group by audit_type
+order by event_count desc;` },
+
+  's5': { label: 'Q8: Patient Lookup Coverage', sql: `-- Q8: Patient lookup rate by source_type
+with requests_90d as (
+    select e.erequest_id, e.source_type
+    from connex.erequest_dynamic e
+    where e.date_received >= dateadd('day', -90, current_date())
+      and e.source_type is not null
+),
+patient_lookups as (
+    select distinct at.erequest_id, 1 as has_lookup
+    from connex.erequest_audit_trail_dynamic at
+    where at.audit_type in ('PatientLookupStarted', 'PatientLookupFinished', 'PatientLookupNotFound')
+      and at.event_dt >= dateadd('day', -90, current_date())
+)
+select r.source_type, count(*) as total_requests,
+    count(pl.has_lookup) as with_patient_lookup,
+    round(count(pl.has_lookup) * 100.0 / count(*), 1) as pct_with_lookup
+from requests_90d r
+left join patient_lookups pl on r.erequest_id = pl.erequest_id
+group by r.source_type
+order by total_requests desc;` },
+
+  's6': { label: 'Q5b: Rework Rate (Human-Worked)', sql: `-- Q5b: Rework rate for UPLOAD + CENTRAL INTAKE only
+with logging_visits as (
+    select es.erequest_id, rs.status_desc, es.state_timestamp, e.source_type,
+        lead(es.state_timestamp) over (
+            partition by es.erequest_id order by es.state_timestamp
+        ) as next_timestamp
+    from connex.erequest_status_dynamic es
+    join connex.request_status rs on es.status_id = rs.status_id
+    join connex.erequest_dynamic e on es.erequest_id = e.erequest_id
+    where rs.status_desc in ('Logging', 'Redo Logging', 'Back To Logging', 'Logging Exception', 'Logging On Hold')
+      and es.state_timestamp >= dateadd('day', -90, current_date())
+      and e.source_type in ('UPLOAD', 'CENTRAL INTAKE')
+),
+request_logging_summary as (
+    select erequest_id,
+        count(case when status_desc = 'Redo Logging' then 1 end) as redo_count,
+        count(case when status_desc = 'Back To Logging' then 1 end) as back_to_logging_count,
+        count(case when status_desc = 'Logging Exception' then 1 end) as exception_count
+    from logging_visits group by erequest_id
+)
+select
+    case
+        when redo_count > 0 then 'Had redo'
+        when back_to_logging_count > 0 then 'Sent back'
+        when exception_count > 0 then 'Had exception'
+        else 'Clean pass'
+    end as logging_journey,
+    count(*) as request_count,
+    round(count(*) * 100.0 / sum(count(*)) over (), 1) as pct_of_total
+from request_logging_summary
+group by 1
+order by request_count desc;` },
+
+  's6b': { label: 'Q32 + Q18: Rework Cost', sql: `-- Q32: Rework volume (annualized)
+with rework as (
+    select es.erequest_id, count(*) as redo_transitions
+    from connex.erequest_status_dynamic es
+    join connex.request_status rs on es.status_id = rs.status_id
+    join connex.erequest_dynamic e on es.erequest_id = e.erequest_id
+    where rs.status_desc in ('Redo Logging', 'Back To Logging', 'Back To Fulfillment')
+      and e.source_type in ('UPLOAD', 'CENTRAL INTAKE')
+      and es.state_timestamp >= dateadd('day', -90, current_date())
+    group by es.erequest_id
+)
+select count(*) as rework_requests_90d, round(count(*) * 4, 0) as annualized,
+    round(avg(redo_transitions), 2) as avg_redos, max(redo_transitions) as max_redos
+from rework;
+
+-- Q18: Clean vs rework time decomposition
+-- (See Q18 in queries/q18_clean_vs_rework_decomp.sql for full CTE)
+-- Key output: journey_type, median_logging_hrs, median_redo_hrs,
+--   median_sentback_hrs, median_hold_hrs, median_total_hrs` },
+
+  's7': { label: 'Q13c: Exception Breakdown', sql: `-- Q13c: Exception reasons by volume (human-worked)
+with exception_events as (
+    select ex.erequest_id, ex.exception_reason_id, ex.exception_comment,
+        e.source_type, e.major_class
+    from connex.erequest_exception ex
+    join connex.erequest_dynamic e on ex.erequest_id = e.erequest_id
+    where ex.created_dt >= dateadd('day', -90, current_date())
+      and e.source_type in ('UPLOAD', 'CENTRAL INTAKE')
+)
+select exception_reason_id, count(*) as occurrences,
+    round(count(*) * 100.0 / sum(count(*)) over (), 1) as pct_of_total,
+    count(case when source_type = 'UPLOAD' then 1 end) as upload_cnt,
+    count(case when source_type = 'CENTRAL INTAKE' then 1 end) as central_cnt
+from exception_events
+group by exception_reason_id
+order by occurrences desc;
+-- Join to connex.erequest_exception_reason for human-readable names` },
+
+  's8b': { label: 'Q16: Touch Time vs Wait Time', sql: `-- Q16: Per-status duration decomposition (human-worked)
+with status_durations as (
+    select es.erequest_id, rs.status_desc, es.state_timestamp,
+        lead(es.state_timestamp) over (
+            partition by es.erequest_id order by es.state_timestamp
+        ) as next_timestamp
+    from connex.erequest_status_dynamic es
+    join connex.request_status rs on es.status_id = rs.status_id
+    join connex.erequest_dynamic e on es.erequest_id = e.erequest_id
+    where es.state_timestamp >= dateadd('day', -90, current_date())
+      and e.source_type in ('UPLOAD', 'CENTRAL INTAKE')
+),
+categorized as (
+    select erequest_id, status_desc,
+        datediff('second', state_timestamp, next_timestamp) as duration_sec,
+        case
+            when status_desc in ('Logging','Fulfillment','QC In Progress','Redo Logging') then 'Active Work'
+            when status_desc in ('Logging On Hold','Logging Exception','Fulfillment Exception') then 'Hold/Exception'
+            when status_desc in ('Back To Logging','Back To Fulfillment') then 'Sent Back (Queue)'
+            else 'Other/Transit'
+        end as time_category
+    from status_durations
+    where next_timestamp is not null
+      and datediff('second', state_timestamp, next_timestamp) between 1 and 604800
+)
+select status_desc, time_category, count(*) as transitions,
+    round(median(duration_sec), 1) as median_sec,
+    round(percentile_cont(0.75) within group (order by duration_sec), 1) as p75_sec
+from categorized
+group by status_desc, time_category
+order by transitions desc;` },
+
+  's8b2': { label: 'Q33 + Q35: Queue Cost', sql: `-- Q33: Exception queue hours → FTE-equivalents
+with exception_durations as (
+    select es.erequest_id, rs.status_desc,
+        datediff('minute', es.state_timestamp,
+            lead(es.state_timestamp) over (partition by es.erequest_id order by es.state_timestamp)
+        ) as duration_min
+    from connex.erequest_status_dynamic es
+    join connex.request_status rs on es.status_id = rs.status_id
+    join connex.erequest_dynamic e on es.erequest_id = e.erequest_id
+    where rs.status_desc in ('Logging Exception','Fulfillment Exception',
+                             'Logging On Hold','Fulfillment On Hold')
+      and e.source_type in ('UPLOAD', 'CENTRAL INTAKE')
+      and es.state_timestamp >= dateadd('day', -90, current_date())
+)
+select status_desc, count(*) as occurrences_90d,
+    round(median(duration_min) / 60.0, 1) as median_hours,
+    round(sum(duration_min) / 60.0 * 4 / 2080, 1) as annualized_ftes
+from exception_durations
+where duration_min > 0 and duration_min < 43200
+group by status_desc
+order by annualized_ftes desc;
+
+-- Q35: Weekend vs business hours gap
+-- shift = Weekend | Off-Hours | Business Hours
+-- Key finding: Weekend median 56.7h vs Business 11.8h (4.8x)` },
+
+  's8c': { label: 'Q41d: Resubmission Categories', sql: `-- Q41d: Categorize resubmission comments from audit_message
+with resub as (
+    select case when audit_message like '%Comment : %'
+        then trim(substr(audit_message, position('Comment : ' in audit_message) + 10))
+        else '' end as comment_text
+    from connex.erequest_audit_trail_dynamic
+    where audit_type = 'RequestResubmittedToLogging'
+      and event_dt >= dateadd('day', -90, current_date())
+),
+categorized as (
+    select comment_text,
+        case
+            when comment_text = '' then 'NO_REASON'
+            when lower(comment_text) like '%site%' then 'SITE_CHANGE'
+            when lower(comment_text) like '%coc%' or lower(comment_text) like '%boc%' then 'COC_BOC'
+            when lower(comment_text) like '%split%' then 'SPLIT'
+            when lower(comment_text) like '%mrn%' then 'MRN_CORRECTION'
+            when lower(comment_text) like '%dar%' or lower(comment_text) like '%relog%' then 'DAR_RELOG'
+            when lower(comment_text) like '%patient%' then 'PATIENT_ISSUE'
+            when lower(comment_text) like '%pull list%' then 'PULL_LIST'
+            when lower(comment_text) like '%billing%' then 'BILLING'
+            when lower(comment_text) like '%date%' or lower(comment_text) like '%dob%' then 'DATE_CORRECTION'
+            else 'OTHER'
+        end as category
+    from resub
+)
+select category, count(*) as cnt,
+    round(count(*) * 100.0 / sum(count(*)) over (), 1) as pct
+from categorized group by category order by cnt desc;` },
+
+  's8d': { label: 'Q34: QC Verify FP Cost', sql: `-- Q34: QC Verify false positive review cost
+with conflict_stats as (
+    select c.erequest_id,
+        count(*) as conflicts_per_request,
+        sum(case when a.ignored = 'Y' then 1 else 0 end) as ignored_cnt,
+        sum(case when a.deleted = 'Y' then 1 else 0 end) as deleted_cnt
+    from connex.erequest_qc_conflicts c
+    left join connex.erequest_qc_action a
+        on c.erequest_qc_conflicts_id = a.erequest_qc_conflicts_id
+    where c.erequest_id in (
+        select erequest_id from connex.erequest_dynamic
+        where created_dt >= dateadd('day', -90, current_date())
+    )
+    group by c.erequest_id
+)
+select count(distinct erequest_id) as requests_with_conflicts,
+    sum(conflicts_per_request) as total_conflicts,
+    round(sum(ignored_cnt) * 100.0 / nullif(sum(conflicts_per_request), 0), 1) as ignore_pct,
+    round(sum(conflicts_per_request) * 15 / 3600.0 * 4 / 2080, 1) as est_review_ftes
+from conflict_stats;` },
+
+  's8e': { label: 'Q29: Temporal Patterns', sql: `-- Q29: Exception queue duration by day-of-week x hour
+with exception_durations as (
+    select es.erequest_id, es.state_timestamp as exception_start,
+        lead(es.state_timestamp) over (
+            partition by es.erequest_id order by es.state_timestamp
+        ) as exception_end,
+        dayofweek(es.state_timestamp) as dow,
+        hour(es.state_timestamp) as hour_of_day
+    from connex.erequest_status_dynamic es
+    join connex.request_status rs on es.status_id = rs.status_id
+    join connex.erequest_dynamic e on es.erequest_id = e.erequest_id
+    where rs.status_desc = 'Logging Exception'
+      and es.state_timestamp >= dateadd('day', -90, current_date())
+      and e.source_type in ('UPLOAD', 'CENTRAL INTAKE')
+)
+select dow,
+    case dow when 0 then 'Mon' when 1 then 'Tue' when 2 then 'Wed'
+        when 3 then 'Thu' when 4 then 'Fri' when 5 then 'Sat' when 6 then 'Sun' end as day_name,
+    hour_of_day, count(*) as exceptions_created,
+    round(median(datediff('second', exception_start, exception_end) / 3600.0), 2) as median_hrs
+from exception_durations
+where exception_end is not null
+  and datediff('second', exception_start, exception_end) between 60 and 604800
+group by dow, day_name, hour_of_day
+order by dow, hour_of_day;` },
+
+  's8f': { label: 'Q30: Site Outliers', sql: `-- Q30: Worst performing sites (500+ human-worked requests)
+with site_stats as (
+    select e.dds_site_id, count(distinct e.erequest_id) as total_requests,
+        count(distinct case when rs.status_desc = 'Redo Logging' then es.erequest_id end) as redo_cnt,
+        count(distinct case when rs.status_desc = 'Logging Exception' then es.erequest_id end) as exception_cnt
+    from connex.erequest_dynamic e
+    join connex.erequest_status_dynamic es on e.erequest_id = es.erequest_id
+    join connex.request_status rs on es.status_id = rs.status_id
+    where e.source_type in ('UPLOAD', 'CENTRAL INTAKE')
+      and e.created_dt >= dateadd('day', -90, current_date())
+    group by e.dds_site_id
+    having total_requests >= 500
+)
+select dds_site_id, total_requests,
+    round(redo_cnt * 100.0 / total_requests, 1) as redo_pct,
+    round(exception_cnt * 100.0 / total_requests, 1) as exception_pct,
+    round((redo_cnt + exception_cnt) * 100.0 / total_requests, 1) as combined_issue_pct
+from site_stats
+order by combined_issue_pct desc limit 15;` },
+
+  'sheat': { label: 'Q16 + Q18: Journey Decomposition', sql: `-- Journey time decomposition (from Q16 and Q18)
+-- Clean Pass: 2.8h total (2.1h logging + QC + transit)
+-- Had Redo: 11.9h total (0.9h log + 6.9h exception queue + 0.6h redo + transit)
+-- Had Exception: 18.5h total (1.7h log + 7.4h exception hold + resolution)
+-- Sent Back: 44.2h total (12.4h active + 6.9h hold + ~25h queue gaps)
+-- See queries/q16_touch_vs_wait.sql and queries/q18_clean_vs_rework_decomp.sql` },
+
+  'sfixmap': { label: 'Synthesis: Opportunity Estimates', sql: `-- FTE-equivalent savings estimated from:
+-- Weekend Triage: 50% of 842 FTE weekend excess (Q35) = ~420 FTEs
+-- Queue SLA: 20% of 3,222 FTE exception queues (Q33) = ~640 FTEs
+-- Pre-Validation: 30% fewer exceptions x 6.9h queue (Q15b, Q33) = ~380 FTEs
+-- Auto-Route: 35% of 632K resubs/yr x 6.6h queue (Q41d, Q16) = ~700 FTEs
+-- Verify FP: 50-70% of 670K/qtr FPs filtered (Q34, Q49b) = ~50 FTEs + quality
+-- Site Dashboards: Worst 5 sites to fleet median (Q38, Q39) = ~30 FTEs
+-- See INSIGHTS.md Punchlist (PL-1 through PL-8) for full derivations` }
+};
+
+Object.entries(sqlReveals).forEach(([slideId, data]) => {
+  const slide = document.getElementById(slideId);
+  if (!slide) return;
+  const details = document.createElement('details');
+  details.className = 'sql-reveal';
+  const summary = document.createElement('summary');
+  summary.textContent = '\u{1F4CB} View SQL \u2014 ' + data.label;
+  details.appendChild(summary);
+  const labelDiv = document.createElement('div');
+  labelDiv.className = 'sql-label';
+  labelDiv.textContent = 'HEALTHSOURCE.CONNEX \u00B7 Role: ENG_PROVIDER \u00B7 Last 90 days';
+  details.appendChild(labelDiv);
+  const pre = document.createElement('pre');
+  const code = document.createElement('code');
+  code.textContent = data.sql;
+  pre.appendChild(code);
+  details.appendChild(pre);
+  slide.appendChild(details);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RO-AI Lab | Session 7: Compound Engineering</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --cream: #faf6f0;
+    --cream-deep: #f0ebe3;
+    --paper: #fff9f2;
+    --ink: #1c1917;
+    --ink-soft: #44403c;
+    --ink-muted: #78716c;
+    --amber: #c2410c;
+    --amber-light: #ea580c;
+    --amber-glow: #fdba7420;
+    --amber-wash: #fff7ed;
+    --teal: #0d9488;
+    --teal-light: #14b8a6;
+    --teal-wash: #f0fdfa;
+    --coral: #e11d48;
+    --coral-soft: #fef2f2;
+    --indigo: #4f46e5;
+    --indigo-wash: #eef2ff;
+    --terminal-green: #4ade80;
+    --terminal-blue: #60a5fa;
+    --terminal-yellow: #fbbf24;
+    --terminal-red: #f87171;
+    --terminal-purple: #c084fc;
+    --jira-blue: #0052cc;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.65;
+    overflow-x: hidden;
+  }
+
+  /* Grain Overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 200px;
+  }
+
+  /* Navigation */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(250, 246, 240, 0.9);
+    backdrop-filter: blur(16px);
+    border-bottom: 2px solid var(--ink);
+    padding: 0.6rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  nav .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--amber);
+    white-space: nowrap;
+    letter-spacing: -0.02em;
+  }
+  nav .logo span { color: var(--ink); }
+  nav .progress-track { flex: 1; height: 3px; background: var(--cream-deep); border-radius: 2px; overflow: hidden; }
+  nav .progress-fill { height: 100%; background: var(--amber); border-radius: 2px; width: 0%; transition: width 0.3s ease; }
+  nav .slide-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+    white-space: nowrap;
+    background: var(--cream-deep);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+  }
+
+  /* Slides */
+  .slide {
+    min-height: 100vh;
+    padding: 7rem 2rem 5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .slide:nth-child(even) { background: var(--paper); }
+  .slide-inner { max-width: 900px; width: 100%; position: relative; z-index: 2; }
+
+  /* Decorative */
+  .deco { position: absolute; pointer-events: none; z-index: 0; }
+  .deco-circle { border-radius: 50%; border: 2.5px solid var(--ink); opacity: 0.07; }
+  .deco-dot-grid { background-image: radial-gradient(circle, var(--ink) 1px, transparent 1px); background-size: 18px 18px; opacity: 0.06; }
+  .deco-cross { width: 20px; height: 20px; position: absolute; opacity: 0.1; }
+  .deco-cross::before, .deco-cross::after { content: ''; position: absolute; background: var(--amber); }
+  .deco-cross::before { width: 100%; height: 3px; top: 50%; left: 0; transform: translateY(-50%); }
+  .deco-cross::after { width: 3px; height: 100%; left: 50%; top: 0; transform: translateX(-50%); }
+
+  /* Title Slide */
+  .slide.title-slide { text-align: center; }
+  .title-slide h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.8rem, 6vw, 5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    margin-bottom: 1.25rem;
+    color: var(--ink);
+    letter-spacing: -0.03em;
+  }
+  .title-slide h1 .highlight { color: var(--amber); font-style: italic; }
+  .title-slide .subtitle { font-size: 1.2rem; color: var(--ink-soft); margin-bottom: 2rem; font-weight: 400; }
+  .title-slide .session-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1.1rem;
+    background: var(--ink);
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--cream);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 2.5rem;
+  }
+
+  /* Claude Mascot */
+  .claude-mascot { display: inline-block; position: relative; }
+  .claude-mascot .face {
+    width: 72px; height: 72px;
+    background: var(--amber);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 6px 24px rgba(194, 65, 12, 0.25), inset 0 -3px 0 rgba(0,0,0,0.1);
+    animation: bob 4s ease-in-out infinite;
+    border: 3px solid var(--ink);
+  }
+  .claude-mascot .face::before { content: '\2726'; color: white; font-size: 2rem; }
+  .claude-mascot.small .face { width: 32px; height: 32px; border-width: 2px; box-shadow: 0 3px 10px rgba(194, 65, 12, 0.2); }
+  .claude-mascot.small .face::before { font-size: 0.9rem; }
+
+  @keyframes bob {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-6px) rotate(2deg); }
+    75% { transform: translateY(-4px) rotate(-1deg); }
+  }
+
+  /* Section Headers */
+  .section-label {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.15em;
+    color: var(--amber); margin-bottom: 0.75rem; font-weight: 600;
+  }
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    font-weight: 900; line-height: 1.1; margin-bottom: 1.25rem;
+    letter-spacing: -0.02em; color: var(--ink);
+  }
+  h3 { font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--ink); }
+  p.lead { font-size: 1.1rem; color: var(--ink-soft); max-width: 640px; margin-bottom: 2rem; }
+
+  /* Terminal */
+  .terminal {
+    background: #0d1117; border: 2.5px solid var(--ink); border-radius: 14px;
+    overflow: hidden; font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem; line-height: 1.7;
+    box-shadow: 8px 8px 0 var(--ink); margin: 1.5rem 0; color: #e6edf3;
+  }
+  .terminal-header {
+    background: #161b22; padding: 0.6rem 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    border-bottom: 1px solid #30363d;
+  }
+  .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .terminal-dot.red { background: #ff5f57; }
+  .terminal-dot.yellow { background: #ffbd2e; }
+  .terminal-dot.green { background: #28c840; }
+  .terminal-title { flex: 1; text-align: center; font-size: 0.75rem; color: #8b949e; }
+  .terminal-body { padding: 1.25rem; overflow-x: auto; max-height: 700px; overflow-y: auto; }
+  .terminal-body::-webkit-scrollbar { width: 6px; }
+  .terminal-body::-webkit-scrollbar-track { background: transparent; }
+  .terminal-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+  .term-line { margin-bottom: 0.25rem; white-space: pre-wrap; word-break: break-word; }
+  .term-prompt { color: var(--terminal-green); }
+  .term-prompt::before { content: '\276F '; color: var(--amber-light); }
+  .term-user { color: var(--terminal-blue); }
+  .term-claude { color: #e6edf3; }
+  .term-claude-badge {
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    background: linear-gradient(135deg, rgba(217, 119, 6, 0.25), rgba(245, 158, 11, 0.1));
+    border: 1px solid rgba(217, 119, 6, 0.35);
+    padding: 0.1rem 0.5rem; border-radius: 4px;
+    color: #f59e0b; font-size: 0.75rem; margin-bottom: 0.3rem;
+  }
+  .term-claude-badge::before { content: '\2726'; font-size: 0.6rem; }
+  .term-tool { color: var(--terminal-purple); font-style: italic; opacity: 0.8; }
+  .term-success { color: var(--terminal-green); }
+  .term-error { color: var(--terminal-red); }
+  .term-dim { color: #484858; }
+  .term-highlight { color: var(--terminal-yellow); }
+  .term-comment { color: #6a737d; }
+
+  /* Cards */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin: 1.5rem 0;
+  }
+  .card {
+    background: white;
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+    padding: 1.5rem;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+  .card h4 { font-family: 'Fraunces', serif; font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .card p { font-size: 0.88rem; color: var(--ink-soft); line-height: 1.5; }
+  .card .card-icon { font-size: 1.8rem; margin-bottom: 0.75rem; display: block; }
+
+  /* Zone cards */
+  .card.zone-plan { border-top: 5px solid var(--indigo); }
+  .card.zone-work { border-top: 5px solid var(--teal); }
+  .card.zone-review { border-top: 5px solid var(--amber); }
+  .card.zone-compound { border-top: 5px solid var(--coral); }
+
+  /* Pain cards */
+  .pain-card {
+    background: var(--coral-soft);
+    border: 2px solid var(--coral);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .pain-card p { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.5; }
+  .pain-card strong { color: var(--coral); }
+
+  /* Solution cards */
+  .solution-card {
+    background: var(--teal-wash);
+    border: 2px solid var(--teal);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .solution-card p { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.5; }
+  .solution-card strong { color: var(--teal); }
+
+  /* Transform row */
+  .transform-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1rem;
+    align-items: center;
+    margin: 1rem 0;
+  }
+  .transform-arrow {
+    font-size: 2rem;
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  /* Table */
+  table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    font-size: 0.88rem;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  thead { background: var(--ink); color: var(--cream); }
+  th {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 600;
+  }
+  td { padding: 0.65rem 1rem; border-top: 1px solid var(--cream-deep); }
+  tbody tr { background: white; }
+  tbody tr:hover { background: var(--amber-wash); }
+
+  /* Flow Diagram */
+  .flow { display: flex; align-items: center; gap: 0; margin: 2rem 0; flex-wrap: wrap; justify-content: center; }
+  .flow-step { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 0.75rem; min-width: 80px; text-align: center; }
+  .flow-step .step-icon {
+    width: 64px; height: 64px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; background: white;
+    border: 2.5px solid var(--ink); box-shadow: 3px 3px 0 var(--ink);
+    transition: all 0.25s;
+  }
+  .flow-step:hover .step-icon { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--ink); }
+  .flow-step .step-label { font-size: 0.78rem; color: var(--ink-muted); font-weight: 600; }
+  .flow-step .step-label strong { color: var(--ink); }
+  .flow-arrow { color: var(--ink-muted); font-size: 1.4rem; margin: 0 -0.1rem; }
+
+  /* Stats Row */
+  .stats-row { display: flex; gap: 3rem; justify-content: center; flex-wrap: wrap; margin: 2.5rem 0; }
+  .stat { text-align: center; }
+  .stat .stat-value { font-family: 'Fraunces', serif; font-size: 3rem; font-weight: 900; color: var(--amber); line-height: 1; }
+  .stat .stat-label { font-size: 0.78rem; color: var(--ink-muted); margin-top: 0.3rem; font-weight: 500; }
+
+  /* Callout */
+  .callout {
+    background: var(--amber-wash); border: 2.5px solid var(--amber); border-radius: 14px;
+    padding: 1.1rem 1.4rem; display: flex; gap: 0.75rem; align-items: flex-start;
+    margin: 1.5rem 0; box-shadow: 4px 4px 0 var(--amber);
+  }
+  .callout-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 0.1rem; }
+  .callout-text { font-size: 0.88rem; line-height: 1.55; color: var(--ink-soft); }
+  .callout-text strong { color: var(--amber); }
+  .callout.teal { background: var(--teal-wash); border-color: var(--teal); box-shadow: 4px 4px 0 var(--teal); }
+  .callout.teal .callout-text strong { color: var(--teal); }
+  .callout.coral { background: var(--coral-soft); border-color: var(--coral); box-shadow: 4px 4px 0 var(--coral); }
+  .callout.coral .callout-text strong { color: var(--coral); }
+  .callout.indigo { background: var(--indigo-wash); border-color: var(--indigo); box-shadow: 4px 4px 0 var(--indigo); }
+  .callout.indigo .callout-text strong { color: var(--indigo); }
+
+  /* Info Bar */
+  .info-bar {
+    background: var(--teal-wash); border: 2px solid var(--teal); border-radius: 10px;
+    padding: 0.65rem 1.1rem; display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.82rem; color: var(--teal); font-weight: 500; margin: 1rem 0;
+  }
+
+  /* Inline code */
+  code.inline {
+    background: var(--cream-deep); border: 1.5px solid #d6d3d1;
+    padding: 0.1rem 0.4rem; border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--amber);
+  }
+
+  /* Comparison */
+  .comparison { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1.5rem; align-items: center; margin: 2.5rem 0; }
+  .comparison-arrow { font-size: 2.5rem; color: var(--amber); animation: wiggle 2s ease-in-out infinite; }
+  .comparison-box {
+    background: white; border: 2.5px solid var(--ink); border-radius: 14px;
+    padding: 2rem 1.5rem; text-align: center; box-shadow: 4px 4px 0 var(--ink);
+  }
+  .comparison-box .big-number { font-family: 'Fraunces', serif; font-size: 3.5rem; font-weight: 900; line-height: 1; margin-bottom: 0.35rem; }
+  .comparison-box .big-label { font-size: 0.85rem; color: var(--ink-soft); font-weight: 500; }
+  .comparison-box.before .big-number { color: var(--coral); }
+  .comparison-box.before { border-color: var(--coral); box-shadow: 4px 4px 0 var(--coral); }
+  .comparison-box.after .big-number { color: var(--teal); }
+  .comparison-box.after { border-color: var(--teal); box-shadow: 4px 4px 0 var(--teal); }
+  @keyframes wiggle { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(8px); } }
+
+  /* Ladder */
+  .ladder {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 2rem 0;
+  }
+  .ladder-step {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 1rem;
+    align-items: center;
+    padding: 0.9rem 1.25rem;
+    background: white;
+    border: 2px solid var(--cream-deep);
+    border-bottom: none;
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  .ladder-step:first-child { border-radius: 14px 14px 0 0; }
+  .ladder-step:last-child { border-radius: 0 0 14px 14px; border-bottom: 2px solid var(--cream-deep); }
+  .ladder-step:hover { background: var(--amber-wash); }
+  .ladder-step .stage-num {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: var(--ink-muted);
+    text-align: center;
+  }
+  .ladder-step .stage-content { }
+  .ladder-step .stage-title {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 1rem;
+    margin-bottom: 0.15rem;
+  }
+  .ladder-step .stage-desc { font-size: 0.82rem; color: var(--ink-muted); }
+  .ladder-step.active {
+    background: var(--amber-wash);
+    border-color: var(--amber);
+    border-width: 2.5px;
+    box-shadow: 4px 4px 0 var(--amber);
+    z-index: 2;
+    border-bottom: 2.5px solid var(--amber);
+  }
+  .ladder-step.active .stage-num { color: var(--amber); }
+  .ladder-step.target {
+    background: var(--teal-wash);
+    border-color: var(--teal);
+    border-width: 2.5px;
+    box-shadow: 4px 4px 0 var(--teal);
+    z-index: 2;
+    border-bottom: 2.5px solid var(--teal);
+  }
+  .ladder-step.target .stage-num { color: var(--teal); }
+  .ladder-step .you-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.1rem 0.5rem;
+    background: var(--amber);
+    color: white;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-left: 0.5rem;
+  }
+  .ladder-step .next-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.1rem 0.5rem;
+    background: var(--teal);
+    color: white;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 600;
+    margin-left: 0.5rem;
+  }
+
+  /* Big Quote */
+  .big-quote {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 500;
+    font-style: italic;
+    color: var(--ink);
+    line-height: 1.35;
+    margin: 2rem 0;
+    padding-left: 1.5rem;
+    border-left: 5px solid var(--amber);
+  }
+  .big-quote .attribution {
+    display: block;
+    font-size: 0.85rem;
+    font-style: normal;
+    font-weight: 400;
+    color: var(--ink-muted);
+    margin-top: 0.5rem;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* Footer */
+  footer {
+    text-align: center; padding: 2.5rem 2rem; color: var(--ink-muted);
+    font-size: 0.78rem; border-top: 2.5px solid var(--ink);
+    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;
+    background: var(--cream-deep);
+  }
+
+  /* Sparkle */
+  .sparkle { position: fixed; pointer-events: none; z-index: 999; animation: sparkleAnim 1.2s ease-out forwards; }
+  @keyframes sparkleAnim {
+    0% { opacity: 1; transform: scale(0) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+    100% { opacity: 0; transform: scale(0.3) rotate(360deg) translateY(-30px); }
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .comparison { grid-template-columns: 1fr; }
+    .comparison-arrow { transform: rotate(90deg); }
+    .transform-row { grid-template-columns: 1fr; text-align: center; }
+    .transform-arrow { transform: rotate(90deg); }
+    .terminal-body { font-size: 0.72rem; }
+    nav { padding: 0.5rem 1rem; }
+    .ladder-step { grid-template-columns: 50px 1fr; }
+    .flow { gap: 0.25rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="logo">&check; <span>RO-AI</span> Lab</div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressBar"></div>
+  </div>
+  <div class="slide-counter" id="slideCounter">1 / 13</div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 1: Title -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide title-slide" id="slide-1">
+  <div class="deco deco-circle" style="width: 300px; height: 300px; top: 8%; right: -4%;"></div>
+  <div class="deco deco-circle" style="width: 180px; height: 180px; bottom: 12%; left: -3%;"></div>
+  <div class="deco deco-dot-grid" style="width: 200px; height: 200px; top: 15%; left: 5%;"></div>
+  <div class="deco deco-cross" style="top: 25%; right: 15%;"></div>
+  <div class="deco deco-cross" style="bottom: 30%; left: 12%;"></div>
+
+  <div class="slide-inner">
+    <div class="claude-mascot" style="margin-bottom: 1.5rem;">
+      <div class="face"></div>
+    </div>
+    <div class="session-badge">session 07 &middot; compound engineering</div>
+    <h1>Every Fix Makes the<br><span class="highlight">Next Fix Easier</span></h1>
+    <p class="subtitle">A methodology where each unit of engineering work<br>makes subsequent work easier &mdash; not harder.</p>
+    <div class="stats-row" style="margin-top: 2.5rem;">
+      <div class="stat">
+        <div class="stat-value">4</div>
+        <div class="stat-label">phases</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">80/20</div>
+        <div class="stat-label">plan+review / work</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">5</div>
+        <div class="stat-label">adoption stages</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 2: The Problem -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-2">
+  <div class="deco deco-dot-grid" style="width: 180px; height: 180px; bottom: 5%; right: 3%;"></div>
+  <div class="deco deco-cross" style="top: 20%; left: 8%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">the problem</div>
+    <h2>Features add complexity.<br>Complexity slows us down.</h2>
+    <p class="lead">Traditional development is linear. Every sprint makes the codebase a little harder to understand, a little more fragile, a little less fun.</p>
+
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="pain-card">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">&#x1F504;</div>
+        <p><strong>Same bugs, different sprint.</strong> We fix the same class of issues over and over because the fix never taught the system anything.</p>
+      </div>
+      <div class="pain-card">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">&#x1F9E0;</div>
+        <p><strong>Knowledge lives in heads.</strong> How to do X, why Y works that way, what not to touch in Z &mdash; all tribal, all fragile.</p>
+      </div>
+      <div class="pain-card">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">&#x1F3D7;</div>
+        <p><strong>Context rebuilding.</strong> Every new task starts with re-learning the area. "Wait, how does this service work again?"</p>
+      </div>
+      <div class="pain-card">
+        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">&#x1F4C9;</div>
+        <p><strong>Linear throughput.</strong> 10 sprints of effort produces 10 sprints of output. Never more. Often less.</p>
+      </div>
+    </div>
+
+    <div class="callout coral">
+      <div class="callout-icon">&#x1F4A1;</div>
+      <div class="callout-text">
+        <strong>The question:</strong> What if every task you completed made the <em>next</em> task faster? Not linearly &mdash; exponentially?
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 3: The Core Loop -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-3">
+  <div class="deco deco-circle" style="width: 250px; height: 250px; top: 5%; left: -6%;"></div>
+  <div class="deco deco-circle" style="width: 140px; height: 140px; bottom: 10%; right: -3%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">the core loop</div>
+    <h2>Plan &rarr; Work &rarr; Review &rarr; <span style="color: var(--amber);">Compound</span></h2>
+    <p class="lead">Four phases. The first three look like normal development. The fourth is what makes this methodology different.</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-icon" style="background: var(--indigo-wash); border-color: var(--indigo);">&#x1F4DD;</div>
+        <div class="step-label"><strong>Plan</strong></div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="step-icon" style="background: var(--teal-wash); border-color: var(--teal);">&#x2692;</div>
+        <div class="step-label"><strong>Work</strong></div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="step-icon" style="background: var(--amber-wash); border-color: var(--amber);">&#x1F50D;</div>
+        <div class="step-label"><strong>Review</strong></div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="step-icon" style="background: var(--coral-soft); border-color: var(--coral);">&#x1F4C8;</div>
+        <div class="step-label"><strong>Compound</strong></div>
+      </div>
+      <div class="flow-arrow" style="color: var(--ink-muted); opacity: 0.4;">&#x21A9;</div>
+    </div>
+
+    <div class="comparison">
+      <div class="comparison-box before">
+        <div class="big-number">80%</div>
+        <div class="big-label">Plan + Review</div>
+      </div>
+      <div class="comparison-arrow">&harr;</div>
+      <div class="comparison-box after">
+        <div class="big-number">20%</div>
+        <div class="big-label">Work + Compound</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-icon">&#x1F914;</div>
+      <div class="callout-text">
+        <strong>Counterintuitive:</strong> Spend 80% of your time <em>not writing code</em>. Planning and reviewing are where the quality lives. AI handles the typing.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 4: Phase 1 — Plan -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-4">
+  <div class="deco deco-dot-grid" style="width: 160px; height: 160px; top: 12%; right: 4%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">phase 1</div>
+    <h2>Plan: Fix bugs on paper<br>before they reach prod.</h2>
+    <p class="lead">Research the codebase. Study existing patterns. Design the approach. Identify every file you'll touch. The plan <em>is</em> the deliverable.</p>
+
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="card zone-plan">
+        <div class="card-icon">&#x1F50E;</div>
+        <h4>Research first</h4>
+        <p>Let AI scan the codebase, read framework docs, and surface similar implementations. You provide judgment &mdash; it provides coverage.</p>
+      </div>
+      <div class="card zone-plan">
+        <div class="card-icon">&#x1F5FA;</div>
+        <h4>Map the blast radius</h4>
+        <p>Every file that will change. Every test that needs updating. Every downstream effect. Know the shape of the work before writing line one.</p>
+      </div>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+        <div class="terminal-title">~/code/healthsource</div>
+      </div>
+      <div class="terminal-body">
+        <div class="term-line"><span class="term-prompt">claude</span></div>
+        <div class="term-line"><span class="term-user">Plan the implementation for HEAL-1780. Read the PRD in ideas/heal-1780-full-plan.md,</span></div>
+        <div class="term-line"><span class="term-user">research the existing intake service code, and produce a step-by-step plan.</span></div>
+        <div class="term-line"></div>
+        <div class="term-line"><span class="term-claude-badge">Claude</span></div>
+        <div class="term-line"><span class="term-tool">Reading ideas/heal-1780-full-plan.md...</span></div>
+        <div class="term-line"><span class="term-tool">Searching services/intakeservices/ for routing patterns...</span></div>
+        <div class="term-line"><span class="term-tool">Reading IntakeRoutingDelegate.java...</span></div>
+        <div class="term-line"><span class="term-tool">Analyzing test coverage in IntakeRoutingDelegateTest.java...</span></div>
+        <div class="term-line"></div>
+        <div class="term-line"><span class="term-claude">Plan written to docs/plans/heal-1780-intake-acceleration.md</span></div>
+        <div class="term-line"><span class="term-claude">  <span class="term-success">12 steps</span> &middot; <span class="term-highlight">7 files</span> &middot; <span class="term-tool">3 new tests</span> &middot; <span class="term-dim">2 config changes</span></span></div>
+        <div class="term-line"></div>
+        <div class="term-line"><span class="term-comment"># You review the plan. Adjust. Approve. Then AI executes.</span></div>
+      </div>
+    </div>
+
+    <div class="big-quote">
+      &ldquo;Plans are the new code.&rdquo;
+      <span class="attribution">&mdash; Compound Engineering Guide</span>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 5: Phase 2 — Work -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-5">
+  <div class="deco deco-circle" style="width: 200px; height: 200px; bottom: 8%; left: -5%;"></div>
+  <div class="deco deco-cross" style="top: 18%; right: 10%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">phase 2</div>
+    <h2>Work: Monitor,<br>don't micromanage.</h2>
+    <p class="lead">AI implements the plan step-by-step in an isolated worktree. You supervise at the milestone level, not the keystroke level.</p>
+
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+      <div class="card zone-work">
+        <div class="card-icon">&#x1F333;</div>
+        <h4>Isolated worktrees</h4>
+        <p>In-flight work is untouched. Feature develops in a clean branch with zero conflict risk.</p>
+      </div>
+      <div class="card zone-work">
+        <div class="card-icon">&#x2705;</div>
+        <h4>Continuous validation</h4>
+        <p>Tests, linters, type checkers run after every change. Catch drift immediately, not at PR time.</p>
+      </div>
+      <div class="card zone-work">
+        <div class="card-icon">&#x1F3D7;</div>
+        <h4>Architect, not typist</h4>
+        <p>Your value is in the <em>what</em> and <em>why</em>. The <em>how</em> is increasingly handled by tools.</p>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <div class="callout-icon">&#x1F3AF;</div>
+      <div class="callout-text">
+        <strong>The shift:</strong> You wouldn't hand-cut every board when building a house. You'd design the blueprint and operate the tools. Same energy.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 6: Phase 3 — Review -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-6">
+  <div class="deco deco-dot-grid" style="width: 200px; height: 200px; top: 8%; left: 3%;"></div>
+  <div class="deco deco-cross" style="bottom: 25%; right: 8%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">phase 3</div>
+    <h2>Review: Parallel agents,<br>not tired eyes.</h2>
+    <p class="lead">Multiple specialized reviewers run simultaneously. Security, performance, architecture, data integrity, code quality &mdash; each with its own lens.</p>
+
+    <div class="card-grid" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));">
+      <div class="card" style="border-top: 4px solid #ef4444; padding: 1rem;">
+        <div style="font-size: 1.4rem; margin-bottom: 0.4rem;">&#x1F6E1;</div>
+        <h4 style="font-size: 0.95rem;">Security</h4>
+        <p style="font-size: 0.78rem;">OWASP top 10, injection, auth flaws</p>
+      </div>
+      <div class="card" style="border-top: 4px solid #f59e0b; padding: 1rem;">
+        <div style="font-size: 1.4rem; margin-bottom: 0.4rem;">&#x26A1;</div>
+        <h4 style="font-size: 0.95rem;">Performance</h4>
+        <p style="font-size: 0.78rem;">N+1 queries, caching, bottlenecks</p>
+      </div>
+      <div class="card" style="border-top: 4px solid #8b5cf6; padding: 1rem;">
+        <div style="font-size: 1.4rem; margin-bottom: 0.4rem;">&#x1F3DB;</div>
+        <h4 style="font-size: 0.95rem;">Architecture</h4>
+        <p style="font-size: 0.78rem;">Boundaries, patterns, dependencies</p>
+      </div>
+      <div class="card" style="border-top: 4px solid #06b6d4; padding: 1rem;">
+        <div style="font-size: 1.4rem; margin-bottom: 0.4rem;">&#x1F5C4;</div>
+        <h4 style="font-size: 0.95rem;">Data</h4>
+        <p style="font-size: 0.78rem;">Migrations, integrity, transactions</p>
+      </div>
+      <div class="card" style="border-top: 4px solid #10b981; padding: 1rem;">
+        <div style="font-size: 1.4rem; margin-bottom: 0.4rem;">&#x2728;</div>
+        <h4 style="font-size: 0.95rem;">Quality</h4>
+        <p style="font-size: 0.78rem;">Simplicity, conventions, types</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 2rem;">Three questions for every AI output</h3>
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem; font-family: 'Fraunces', serif; font-weight: 900; color: var(--amber);">1</div>
+        <p style="font-weight: 600; color: var(--ink);">&ldquo;What was the hardest decision here?&rdquo;</p>
+        <p style="font-size: 0.78rem; margin-top: 0.3rem;">Reveals tricky areas and judgment calls.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem; font-family: 'Fraunces', serif; font-weight: 900; color: var(--amber);">2</div>
+        <p style="font-weight: 600; color: var(--ink);">&ldquo;What alternatives did you reject?&rdquo;</p>
+        <p style="font-size: 0.78rem; margin-top: 0.3rem;">Shows the option space and reasoning.</p>
+      </div>
+      <div class="card" style="text-align: center;">
+        <div style="font-size: 2rem; margin-bottom: 0.5rem; font-family: 'Fraunces', serif; font-weight: 900; color: var(--amber);">3</div>
+        <p style="font-weight: 600; color: var(--ink);">&ldquo;What are you least confident about?&rdquo;</p>
+        <p style="font-size: 0.78rem; margin-top: 0.3rem;">Gets AI to surface its own weaknesses.</p>
+      </div>
+    </div>
+
+    <div class="info-bar">
+      &#x1F4A1; Human review shifts to <strong>intent, approach, and business logic</strong>. Automated agents handle syntax, style, and security.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 7: Phase 4 — Compound -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-7">
+  <div class="deco deco-circle" style="width: 280px; height: 280px; top: 5%; right: -6%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">phase 4 &mdash; the key differentiator</div>
+    <h2>Compound: Solve it once.<br>Teach the system forever.</h2>
+    <p class="lead">After every task, extract what you learned into a form the system can reuse. CLAUDE.md entries, skills, agent instructions, solution docs. This is what creates exponential returns.</p>
+
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="card zone-compound">
+        <div class="card-icon">&#x1F4DA;</div>
+        <h4>Solution docs</h4>
+        <p>Write up the problem, root cause, and fix with YAML frontmatter. Next time someone hits the same issue, the system finds it automatically.</p>
+      </div>
+      <div class="card zone-compound">
+        <div class="card-icon">&#x1F4DD;</div>
+        <h4>CLAUDE.md updates</h4>
+        <p>Naming conventions, error handling patterns, gotchas &mdash; codify your taste so AI applies it without being told.</p>
+      </div>
+      <div class="card zone-compound">
+        <div class="card-icon">&#x1F3AB;</div>
+        <h4>Skills &amp; agents</h4>
+        <p>Reusable prompt modules that teach Claude domain-specific workflows. Write once, invoke everywhere.</p>
+      </div>
+      <div class="card zone-compound">
+        <div class="card-icon">&#x1F50D;</div>
+        <h4>Verification</h4>
+        <p>After compounding, verify: would the system catch this issue next time? If not, keep refining until it would.</p>
+      </div>
+    </div>
+
+    <div class="big-quote">
+      &ldquo;Teach systems; don't do the work yourself.&rdquo;
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 8: The Adoption Ladder -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-8">
+  <div class="deco deco-dot-grid" style="width: 180px; height: 180px; bottom: 8%; left: 3%;"></div>
+  <div class="deco deco-cross" style="top: 15%; right: 12%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">adoption stages</div>
+    <h2>Five stages.<br>We're climbing.</h2>
+    <p class="lead">Compound engineering isn't binary. It's a spectrum. Most of us are at Stage 2. The goal is Stage 3 &mdash; where the compounding kicks in.</p>
+
+    <div class="ladder">
+      <div class="ladder-step" style="opacity: 0.5;">
+        <div class="stage-num">0</div>
+        <div class="stage-content">
+          <div class="stage-title">Manual Development</div>
+          <div class="stage-desc">No AI assistance. Traditional hand-coding.</div>
+        </div>
+      </div>
+      <div class="ladder-step" style="opacity: 0.6;">
+        <div class="stage-num">1</div>
+        <div class="stage-content">
+          <div class="stage-title">Chat-Based Assistance</div>
+          <div class="stage-desc">ChatGPT/Claude for snippets. Copy-paste workflow.</div>
+        </div>
+      </div>
+      <div class="ladder-step active">
+        <div class="stage-num">2</div>
+        <div class="stage-content">
+          <div class="stage-title">Agentic + Line-by-Line Review <span class="you-badge">we are here</span></div>
+          <div class="stage-desc">AI reads files and makes changes. Developer approves every action.</div>
+        </div>
+      </div>
+      <div class="ladder-step target">
+        <div class="stage-num">3</div>
+        <div class="stage-content">
+          <div class="stage-title">Plan-First, PR-Only Review <span class="next-badge">target</span></div>
+          <div class="stage-desc">Detailed plan &rarr; AI implements &rarr; human reviews final PR. <strong>Compound engineering begins here.</strong></div>
+        </div>
+      </div>
+      <div class="ladder-step">
+        <div class="stage-num">4</div>
+        <div class="stage-content">
+          <div class="stage-title">Idea to PR</div>
+          <div class="stage-desc">Describe the outcome. Agent handles research, planning, implementation, testing, self-review.</div>
+        </div>
+      </div>
+      <div class="ladder-step">
+        <div class="stage-num">5</div>
+        <div class="stage-content">
+          <div class="stage-title">Parallel Cloud Execution</div>
+          <div class="stage-desc">Multiple agents on different features simultaneously. Proactive improvements.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <div class="callout-icon">&#x1F4CD;</div>
+      <div class="callout-text">
+        <strong>The key transition (2 &rarr; 3):</strong> Stop reviewing individual lines. Start reviewing plans and PRs. Invest in planning details. Let AI research the codebase. Execute and step away from implementation.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 9: Beliefs to Release -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-9">
+  <div class="deco deco-circle" style="width: 220px; height: 220px; top: 10%; left: -5%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">mindset shifts</div>
+    <h2>Uncomfortable truths<br>worth sitting with.</h2>
+    <p class="lead">These aren't strawmen. They're real beliefs most of us hold. Letting go of them is the hardest part of this transition &mdash; and the most important.</p>
+
+    <div style="margin: 2rem 0;">
+      <div class="transform-row">
+        <div class="pain-card">
+          <p><strong>&ldquo;Code must be manually typed.&rdquo;</strong></p>
+        </div>
+        <div class="transform-arrow">&rarr;</div>
+        <div class="solution-card">
+          <p><strong>Quality matters.</strong> Who or what produces the keystrokes doesn't.</p>
+        </div>
+      </div>
+      <div class="transform-row">
+        <div class="pain-card">
+          <p><strong>&ldquo;Every line needs my eyes.&rdquo;</strong></p>
+        </div>
+        <div class="transform-arrow">&rarr;</div>
+        <div class="solution-card">
+          <p><strong>Automated systems</strong> catch categories of issues humans miss (and vice versa).</p>
+        </div>
+      </div>
+      <div class="transform-row">
+        <div class="pain-card">
+          <p><strong>&ldquo;First attempts should be good.&rdquo;</strong></p>
+        </div>
+        <div class="transform-arrow">&rarr;</div>
+        <div class="solution-card">
+          <p><strong>Expect 95% garbage</strong> on attempt one. 50% on attempt two. That's the process.</p>
+        </div>
+      </div>
+      <div class="transform-row">
+        <div class="pain-card">
+          <p><strong>&ldquo;More typing = more learning.&rdquo;</strong></p>
+        </div>
+        <div class="transform-arrow">&rarr;</div>
+        <div class="solution-card">
+          <p><strong>Understanding &gt; muscle memory.</strong> Reading, reviewing, and designing teach more than typing.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-icon">&#x1F9D8;</div>
+      <div class="callout-text">
+        <strong>This is a process.</strong> Nobody flips a switch. Start by noticing which beliefs create friction, then experiment with loosening one at a time.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 10: What to Adopt -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-10">
+  <div class="deco deco-dot-grid" style="width: 200px; height: 200px; top: 10%; right: 3%;"></div>
+  <div class="deco deco-cross" style="bottom: 20%; left: 8%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">new defaults</div>
+    <h2>What to build into<br>your workflow.</h2>
+
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="card" style="border-left: 5px solid var(--amber);">
+        <div class="card-icon">&#x1F9EC;</div>
+        <h4>Extract taste into systems</h4>
+        <p>Your naming conventions, error handling preferences, testing patterns &mdash; put them in <code class="inline">CLAUDE.md</code>, skills, and agent instructions. Don't repeat yourself across reviews.</p>
+      </div>
+      <div class="card" style="border-left: 5px solid var(--teal);">
+        <div class="card-icon">&#x2696;</div>
+        <h4>The 50/50 rule</h4>
+        <p>50% shipping features, 50% improving the system that ships features. System improvements compound; raw feature work doesn't.</p>
+      </div>
+      <div class="card" style="border-left: 5px solid var(--indigo);">
+        <div class="card-icon">&#x1F6E1;</div>
+        <h4>Trust through safety nets</h4>
+        <p>Build guardrails (tests, automated review, monitoring) instead of reviewing every line. Guardrails scale; your attention doesn't.</p>
+      </div>
+      <div class="card" style="border-left: 5px solid var(--coral);">
+        <div class="card-icon">&#x1F916;</div>
+        <h4>Agent-native environments</h4>
+        <p>Can the agent run tests? Create PRs? Read logs? Take screenshots? The more the agent can do, the more you can delegate.</p>
+      </div>
+    </div>
+
+    <div class="callout teal" style="margin-top: 1.5rem;">
+      <div class="callout-icon">&#x1F680;</div>
+      <div class="callout-text">
+        <strong>Parallelization:</strong> Compute is the bottleneck now, not human attention. Run multiple review agents simultaneously. Let one agent research while another implements. Think in parallel.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 11: What We're Already Doing -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-11">
+  <div class="deco deco-circle" style="width: 260px; height: 260px; bottom: 5%; right: -5%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">already in motion</div>
+    <h2>We've been doing this.<br>Now it has a name.</h2>
+    <p class="lead">The RO-AI Lab work <em>is</em> compound engineering. We just didn't call it that. Here's the mapping.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>What We Built</th>
+          <th>Compound Engineering Phase</th>
+          <th>Why It Compounds</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code class="inline">/create-ticket</code></td>
+          <td style="color: var(--coral); font-weight: 600;">Compound</td>
+          <td>Jira ceremony solved once. Every ticket creation is now faster.</td>
+        </tr>
+        <tr>
+          <td><code class="inline">/monitoring-gap</code></td>
+          <td style="color: var(--coral); font-weight: 600;">Compound</td>
+          <td>Alert investigation pattern encoded. New alerts triage themselves.</td>
+        </tr>
+        <tr>
+          <td><code class="inline">/alert-triage</code></td>
+          <td style="color: var(--coral); font-weight: 600;">Compound</td>
+          <td>3 parallel subagents diagnose root causes. Pattern library grows.</td>
+        </tr>
+        <tr>
+          <td><code class="inline">CLAUDE.md</code></td>
+          <td style="color: var(--amber); font-weight: 600;">Extract taste</td>
+          <td>Jira custom fields, API gotchas, team conventions &mdash; captured once.</td>
+        </tr>
+        <tr>
+          <td>Training decks</td>
+          <td style="color: var(--coral); font-weight: 600;">Compound</td>
+          <td>Workflows documented for the whole team, not just one person.</td>
+        </tr>
+        <tr>
+          <td>This deck</td>
+          <td style="color: var(--coral); font-weight: 600;">Compound</td>
+          <td>The framework itself &mdash; named and shared so everyone can use it.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <div class="callout-icon">&#x1F4CD;</div>
+      <div class="callout-text">
+        <strong>Where we are:</strong> Stage 2&ndash;3. We have skills, CLAUDE.md, and agentic workflows. The guide gives us a framework for <em>systematically</em> leveling up &mdash; not just when inspiration strikes.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 12: Getting Started -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-12">
+  <div class="deco deco-dot-grid" style="width: 180px; height: 180px; top: 12%; left: 4%;"></div>
+  <div class="deco deco-cross" style="bottom: 18%; right: 10%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">your next steps</div>
+    <h2>Four things to try<br>this week.</h2>
+
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="card" style="border-top: 5px solid var(--amber);">
+        <div style="font-family: 'Fraunces', serif; font-size: 2.5rem; font-weight: 900; color: var(--amber); margin-bottom: 0.5rem;">1</div>
+        <h4>Compound one thing</h4>
+        <p>Pick a problem you solved this week. Write a CLAUDE.md entry or a skill for it. Future-you will thank present-you.</p>
+      </div>
+      <div class="card" style="border-top: 5px solid var(--teal);">
+        <div style="font-family: 'Fraunces', serif; font-size: 2.5rem; font-weight: 900; color: var(--teal); margin-bottom: 0.5rem;">2</div>
+        <h4>Ask the 3 questions</h4>
+        <p>Next time you review AI output: <em>hardest decision? rejected alternatives? least confident?</em> See what surfaces.</p>
+      </div>
+      <div class="card" style="border-top: 5px solid var(--indigo);">
+        <div style="font-family: 'Fraunces', serif; font-size: 2.5rem; font-weight: 900; color: var(--indigo); margin-bottom: 0.5rem;">3</div>
+        <h4>Plan before you build</h4>
+        <p>Before your next feature, write the plan first. Let Claude research the codebase and suggest the approach. Review the plan, <em>then</em> execute.</p>
+      </div>
+      <div class="card" style="border-top: 5px solid var(--coral);">
+        <div style="font-family: 'Fraunces', serif; font-size: 2.5rem; font-weight: 900; color: var(--coral); margin-bottom: 0.5rem;">4</div>
+        <h4>Ask the compound question</h4>
+        <p>After every task: <em>&ldquo;Will this make the next task easier?&rdquo;</em> If not, you're shipping features. If yes, you're compounding.</p>
+      </div>
+    </div>
+
+    <div class="info-bar" style="margin-top: 1.5rem;">
+      &#x1F4A1; None of this requires new tooling. It's a shift in <strong>when</strong> you think (before coding) and <strong>what</strong> you leave behind (knowledge for the system).
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 13: Closing -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide title-slide" id="slide-13">
+  <div class="deco deco-circle" style="width: 350px; height: 350px; top: 15%; left: -8%;"></div>
+  <div class="deco deco-dot-grid" style="width: 200px; height: 200px; bottom: 10%; right: 5%;"></div>
+  <div class="slide-inner reveal">
+    <div class="claude-mascot" style="margin-bottom: 1.5rem;">
+      <div class="face" style="width: 96px; height: 96px;"></div>
+    </div>
+    <h2 style="margin-bottom: 0.75rem;">Read the full guide</h2>
+    <p class="lead" style="text-align: center; max-width: 600px; margin: 0 auto 1.5rem;">
+      <a href="https://every.to/guides/compound-engineering" target="_blank" style="color: var(--amber); font-weight: 700; font-size: 1.1rem; text-decoration: underline;">every.to/guides/compound-engineering</a>
+    </p>
+    <p class="lead" style="text-align: center; max-width: 600px; margin: 0 auto 2rem;">
+      Drop ideas, questions, or wins in <strong style="color: var(--amber);">#roi-ai</strong>.<br>
+      <span style="font-size: 0.85rem; margin-top: 0.5rem; display: inline-block;">All skills: <a href="https://github.com/datavant/healthsource-scripts" target="_blank" style="color: var(--teal);">healthsource-scripts</a> &rarr; <code class="inline">.claude/skills/</code> &middot; <a href="https://datavant.atlassian.net/wiki/spaces/HealthSour/pages/2506097052" target="_blank" style="color: var(--teal);">Toolbox (Confluence)</a></span>
+    </p>
+    <div class="session-badge" style="font-size: 0.8rem; padding: 0.5rem 1.4rem;">
+      &check; RO-AI Lab &middot; weekly sessions &middot; see you there
+    </div>
+    <p style="margin-top: 2rem; font-size: 0.9rem; color: var(--ink-muted);">
+      Previous sessions:
+      <a href="01-create-ticket-v2.html" style="color: var(--amber); font-weight: 600;">01 &mdash; /create-ticket</a> &middot;
+      <a href="02-project-status-update.html" style="color: var(--amber); font-weight: 600;">02 &mdash; /project-status</a> &middot;
+      <a href="03-monitoring-gap.html" style="color: var(--amber); font-weight: 600;">03 &mdash; /monitoring-gap</a> &middot;
+      <a href="04-cdc-site-sync-fix.html" style="color: var(--amber); font-weight: 600;">04 &mdash; cdc-site-sync</a> &middot;
+      <a href="05-pm-power-tools.html" style="color: var(--amber); font-weight: 600;">05 &mdash; PM power tools</a> &middot;
+      <a href="06-incident-retro-monitors.html" style="color: var(--amber); font-weight: 600;">06 &mdash; incident retros</a>
+    </p>
+  </div>
+</section>
+
+<footer>
+  &check; RO-AI Lab &middot; ROI Engineering &middot; 2026
+</footer>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const progressBar = document.getElementById('progressBar');
+  const slideCounter = document.getElementById('slideCounter');
+  const totalSlides = slides.length;
+
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progressBar.style.width = progress + '%';
+    let current = 1;
+    slides.forEach((slide, i) => {
+      const rect = slide.getBoundingClientRect();
+      if (rect.top < window.innerHeight / 2) current = i + 1;
+    });
+    slideCounter.textContent = current + ' / ' + totalSlides;
+  }
+
+  window.addEventListener('scroll', updateProgress);
+  updateProgress();
+
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.15 });
+  reveals.forEach(el => observer.observe(el));
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      navigateSlide(1);
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      navigateSlide(-1);
+    }
+  });
+
+  function navigateSlide(direction) {
+    let currentIndex = 0;
+    slides.forEach((slide, i) => {
+      const rect = slide.getBoundingClientRect();
+      if (rect.top < window.innerHeight / 2) currentIndex = i;
+    });
+    const nextIndex = Math.max(0, Math.min(totalSlides - 1, currentIndex + direction));
+    slides[nextIndex].scrollIntoView({ behavior: 'smooth' });
+  }
+
+  document.querySelectorAll('.claude-mascot .face').forEach(face => {
+    face.style.cursor = 'pointer';
+    face.addEventListener('click', (e) => {
+      const colors = ['#c2410c', '#ea580c', '#f59e0b', '#0d9488', '#e11d48', '#7c3aed'];
+      for (let i = 0; i < 8; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.textContent = '\u2726';
+        sparkle.style.left = (e.clientX + (Math.random() - 0.5) * 80) + 'px';
+        sparkle.style.top = (e.clientY + (Math.random() - 0.5) * 80) + 'px';
+        sparkle.style.color = colors[i % colors.length];
+        sparkle.style.fontSize = (0.8 + Math.random() * 1) + 'rem';
+        document.body.appendChild(sparkle);
+        setTimeout(() => sparkle.remove(), 1200);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>

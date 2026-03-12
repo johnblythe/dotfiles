@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RO-AI Lab | Session 6: Incident Retro to Shipped Monitors</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;0,9..144,900;1,9..144,400&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --cream: #faf6f0;
+    --cream-deep: #f0ebe3;
+    --paper: #fff9f2;
+    --ink: #1c1917;
+    --ink-soft: #44403c;
+    --ink-muted: #78716c;
+    --amber: #c2410c;
+    --amber-light: #ea580c;
+    --amber-glow: #fdba7420;
+    --amber-wash: #fff7ed;
+    --teal: #0d9488;
+    --teal-light: #14b8a6;
+    --teal-wash: #f0fdfa;
+    --coral: #e11d48;
+    --coral-soft: #fef2f2;
+    --indigo: #4f46e5;
+    --indigo-wash: #eef2ff;
+    --terminal-green: #4ade80;
+    --terminal-blue: #60a5fa;
+    --terminal-yellow: #fbbf24;
+    --terminal-red: #f87171;
+    --terminal-purple: #c084fc;
+    --datadog-purple: #632ca6;
+    --datadog-bg: #f5f0ff;
+    --jira-blue: #0052cc;
+    --terraform-purple: #7b42bc;
+    --terraform-bg: #f8f4ff;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    line-height: 1.65;
+    overflow-x: hidden;
+  }
+
+  /* Grain Overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.025;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 200px;
+  }
+
+  /* Navigation */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(250, 246, 240, 0.9);
+    backdrop-filter: blur(16px);
+    border-bottom: 2px solid var(--ink);
+    padding: 0.6rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+  nav .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: var(--amber);
+    white-space: nowrap;
+    letter-spacing: -0.02em;
+  }
+  nav .logo span { color: var(--ink); }
+  nav .progress-track { flex: 1; height: 3px; background: var(--cream-deep); border-radius: 2px; overflow: hidden; }
+  nav .progress-fill { height: 100%; background: var(--amber); border-radius: 2px; width: 0%; transition: width 0.3s ease; }
+  nav .slide-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+    white-space: nowrap;
+    background: var(--cream-deep);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+  }
+
+  /* Slides */
+  .slide {
+    min-height: 100vh;
+    padding: 7rem 2rem 5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .slide-inner {
+    max-width: 860px;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* Title Slide */
+  .title-slide { text-align: center; }
+  .title-slide h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 900;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+  }
+  .title-slide .subtitle {
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+    line-height: 1.65;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .highlight { color: var(--amber); }
+  .session-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--amber);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: inline-block;
+    background: var(--amber-wash);
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    border: 1.5px solid var(--amber);
+  }
+
+  /* Section Labels */
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--amber);
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+  }
+
+  /* Content */
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+    font-weight: 700;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+  .lead {
+    font-size: 1.05rem;
+    color: var(--ink-soft);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+    max-width: 720px;
+  }
+
+  /* Decorative */
+  .deco {
+    position: absolute;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .deco-circle {
+    border: 2.5px solid var(--cream-deep);
+    border-radius: 50%;
+    opacity: 0.6;
+  }
+  .deco-dot-grid {
+    background-image: radial-gradient(circle, var(--ink) 1px, transparent 1px);
+    background-size: 18px 18px;
+    opacity: 0.06;
+  }
+  .deco-cross {
+    width: 24px; height: 24px;
+    opacity: 0.15;
+  }
+  .deco-cross::before, .deco-cross::after {
+    content: '';
+    position: absolute;
+    background: var(--ink);
+  }
+  .deco-cross::before { width: 24px; height: 2.5px; top: 50%; transform: translateY(-50%); }
+  .deco-cross::after { width: 2.5px; height: 24px; left: 50%; transform: translateX(-50%); }
+
+  /* Claude Mascot */
+  .claude-mascot {
+    width: 72px; height: 72px;
+    background: var(--amber-wash);
+    border: 3px solid var(--amber);
+    border-radius: 50%;
+    margin: 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    animation: bob 3s ease-in-out infinite;
+    box-shadow: 0 4px 12px var(--amber-glow);
+  }
+  .claude-mascot .face {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--amber);
+  }
+  @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+
+  /* Terminal */
+  .terminal {
+    background: #0d1117;
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 1.7;
+    box-shadow: 8px 8px 0 var(--ink);
+    margin: 1.5rem 0;
+  }
+  .terminal-header {
+    background: #161b22;
+    padding: 0.55rem 1rem;
+    display: flex; align-items: center; gap: 0.45rem;
+    border-bottom: 1px solid #30363d;
+  }
+  .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .terminal-dot.red { background: #f87171; }
+  .terminal-dot.yellow { background: #fbbf24; }
+  .terminal-dot.green { background: #4ade80; }
+  .terminal-title {
+    margin-left: 0.5rem; font-size: 0.7rem; color: #8b949e;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .terminal-body { padding: 1rem 1.25rem; color: #e6edf3; overflow-x: auto; }
+  .term-line { padding: 0.1rem 0; }
+  .term-prompt { color: var(--terminal-green); }
+  .term-prompt::before { content: '$ '; color: #8b949e; }
+  .term-claude { color: #e6edf3; }
+  .term-claude-badge {
+    background: var(--amber);
+    color: white;
+    padding: 0.1rem 0.45rem;
+    border-radius: 3px;
+    font-size: 0.65rem;
+    font-weight: 600;
+  }
+  .term-tool { color: var(--terminal-blue); }
+  .term-success { color: var(--terminal-green); }
+  .term-error { color: var(--terminal-red); }
+  .term-warning { color: var(--terminal-yellow); }
+  .term-highlight { color: var(--terminal-yellow); font-weight: 600; }
+  .term-muted { color: #8b949e; }
+  .term-purple { color: var(--terminal-purple); }
+
+  /* Cards */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin: 2rem 0; }
+  .card {
+    background: white; border: 2.5px solid var(--ink); border-radius: 14px;
+    padding: 1.5rem; position: relative;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+  .card-icon { font-size: 2rem; margin-bottom: 0.75rem; }
+  .card h4 { font-family: 'Fraunces', serif; font-size: 1.05rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .card p { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.55; }
+
+  /* Stats Row */
+  .stats-row { display: flex; gap: 3rem; justify-content: center; flex-wrap: wrap; margin: 2.5rem 0; }
+  .stat { text-align: center; }
+  .stat .stat-value { font-family: 'Fraunces', serif; font-size: 3rem; font-weight: 900; color: var(--amber); line-height: 1; }
+  .stat .stat-label { font-size: 0.78rem; color: var(--ink-muted); margin-top: 0.3rem; font-weight: 500; }
+
+  /* Callout */
+  .callout {
+    background: var(--amber-wash); border: 2.5px solid var(--amber); border-radius: 14px;
+    padding: 1.1rem 1.4rem; display: flex; gap: 0.75rem; align-items: flex-start;
+    margin: 1.5rem 0; box-shadow: 4px 4px 0 var(--amber);
+  }
+  .callout-icon { font-size: 1.3rem; flex-shrink: 0; margin-top: 0.1rem; }
+  .callout-text { font-size: 0.88rem; line-height: 1.55; color: var(--ink-soft); }
+  .callout-text strong { color: var(--amber); }
+  .callout.teal { background: var(--teal-wash); border-color: var(--teal); box-shadow: 4px 4px 0 var(--teal); }
+  .callout.teal .callout-text strong { color: var(--teal); }
+  .callout.coral { background: var(--coral-soft); border-color: var(--coral); box-shadow: 4px 4px 0 var(--coral); }
+  .callout.coral .callout-text strong { color: var(--coral); }
+  .callout.purple { background: var(--terraform-bg); border-color: var(--terraform-purple); box-shadow: 4px 4px 0 var(--terraform-purple); }
+  .callout.purple .callout-text strong { color: var(--terraform-purple); }
+
+  /* Comparison */
+  .comparison { display: grid; grid-template-columns: 1fr auto 1fr; gap: 1.5rem; align-items: center; margin: 2.5rem 0; }
+  .comparison-arrow { font-size: 2.5rem; color: var(--amber); animation: wiggle 2s ease-in-out infinite; }
+  .comparison-box {
+    background: white; border: 2.5px solid var(--ink); border-radius: 14px;
+    padding: 2rem 1.5rem; text-align: center; box-shadow: 4px 4px 0 var(--ink);
+  }
+  .comparison-box .big-number { font-family: 'Fraunces', serif; font-size: 3.5rem; font-weight: 900; line-height: 1; margin-bottom: 0.35rem; }
+  .comparison-box .big-label { font-size: 0.85rem; color: var(--ink-soft); font-weight: 500; }
+  .comparison-box.before .big-number { color: var(--coral); }
+  .comparison-box.before { border-color: var(--coral); box-shadow: 4px 4px 0 var(--coral); }
+  .comparison-box.after .big-number { color: var(--teal); }
+  .comparison-box.after { border-color: var(--teal); box-shadow: 4px 4px 0 var(--teal); }
+  @keyframes wiggle { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(8px); } }
+
+  /* Flow Diagram */
+  .flow { display: flex; align-items: center; gap: 0; margin: 2rem 0; flex-wrap: wrap; justify-content: center; }
+  .flow-step { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 0.75rem; min-width: 80px; text-align: center; }
+  .flow-step .step-icon {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; background: white;
+    border: 2.5px solid var(--ink); box-shadow: 3px 3px 0 var(--ink);
+    transition: all 0.25s;
+  }
+  .flow-step:hover .step-icon { background: var(--amber-wash); transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--ink); }
+  .flow-step .step-label { font-size: 0.72rem; color: var(--ink-muted); font-weight: 600; }
+  .flow-arrow { color: var(--ink-muted); font-size: 1.2rem; margin: 0 -0.2rem; }
+
+  /* Scorecard Table */
+  .scorecard {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.82rem;
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .scorecard th {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 0.65rem 1rem;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+  .scorecard td {
+    padding: 0.55rem 1rem;
+    border-bottom: 1px solid var(--cream-deep);
+    background: white;
+  }
+  .scorecard tr:last-child td { border-bottom: none; }
+  .scorecard tr:hover td { background: var(--amber-wash); }
+  .scorecard .status-no {
+    color: var(--coral);
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+  }
+  .scorecard .status-partial {
+    color: var(--amber);
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+  }
+  .scorecard .ticket-ref {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--jira-blue);
+  }
+  .scorecard .no-ticket {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--coral);
+    font-weight: 600;
+  }
+
+  /* Code File Mock */
+  .code-file {
+    background: #0d1117;
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    line-height: 1.7;
+    box-shadow: 8px 8px 0 var(--ink);
+    margin: 1rem 0;
+    color: #e6edf3;
+  }
+  .code-header {
+    background: #161b22;
+    padding: 0.5rem 1rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    border-bottom: 1px solid #30363d;
+    font-size: 0.72rem;
+    color: #8b949e;
+  }
+  .code-header .code-icon { color: #f97316; }
+  .code-header .code-filename { color: #e6edf3; font-weight: 500; }
+  .code-body { padding: 1rem 1.25rem; overflow-x: auto; }
+  .tf-resource { color: var(--terminal-purple); font-weight: 600; }
+  .tf-key { color: #79c0ff; }
+  .tf-val { color: #a5d6ff; }
+  .tf-string { color: var(--terminal-green); }
+  .tf-comment { color: #8b949e; font-style: italic; }
+  .tf-var { color: var(--terminal-yellow); }
+  .tf-bracket { color: #e6edf3; }
+
+  /* Inline code */
+  code.inline {
+    background: var(--cream-deep); border: 1.5px solid #d6d3d1;
+    padding: 0.1rem 0.4rem; border-radius: 5px;
+    font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: var(--amber);
+  }
+
+  /* Info Bar */
+  .info-bar {
+    background: var(--teal-wash); border: 2px solid var(--teal); border-radius: 10px;
+    padding: 0.65rem 1.1rem; display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.82rem; color: var(--teal); font-weight: 500; margin: 1rem 0;
+  }
+
+  /* Link Tree */
+  .link-tree {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    line-height: 2;
+    color: var(--ink-soft);
+    background: white;
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+    padding: 1.5rem 2rem;
+    box-shadow: 4px 4px 0 var(--ink);
+    margin: 1.5rem 0;
+  }
+  .link-tree .tree-root { color: var(--jira-blue); font-weight: 600; }
+  .link-tree .tree-epic { color: var(--amber); font-weight: 600; }
+  .link-tree .tree-new { color: var(--teal); }
+  .link-tree .tree-old { color: var(--ink-muted); }
+
+  /* Division Table */
+  .division-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.85rem;
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  .division-table th {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .division-table td {
+    padding: 0.6rem 1rem;
+    border-bottom: 1px solid var(--cream-deep);
+    background: white;
+  }
+  .division-table tr:last-child td { border-bottom: none; }
+  .division-table .check { color: var(--teal); font-weight: 700; font-size: 1.1rem; text-align: center; }
+  .division-table .empty { text-align: center; }
+
+  /* Artifact grid */
+  .artifact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin: 2rem 0;
+  }
+  .artifact {
+    text-align: center;
+    padding: 1.25rem 0.75rem;
+    background: white;
+    border: 2.5px solid var(--ink);
+    border-radius: 14px;
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .artifact:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+  .artifact .artifact-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .artifact .artifact-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--ink-muted); font-weight: 600;
+  }
+
+  /* Typing Cursor */
+  .typing-cursor::after { content: '\2588'; animation: blink 1s step-end infinite; color: var(--terminal-green); }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* Incident Badge */
+  .incident-badge {
+    display: inline-block;
+    background: var(--coral-soft);
+    border: 2px solid var(--coral);
+    border-radius: 6px;
+    padding: 0.2rem 0.7rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--coral);
+    letter-spacing: 0.05em;
+  }
+
+  /* Timeline */
+  .incident-timeline {
+    position: relative;
+    padding-left: 2rem;
+    margin: 1.5rem 0;
+  }
+  .incident-timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--cream-deep);
+    border-radius: 2px;
+  }
+  .tl-event {
+    position: relative;
+    padding: 0.6rem 0 0.6rem 1.5rem;
+  }
+  .tl-event::before {
+    content: '';
+    position: absolute;
+    left: -1.55rem;
+    top: 0.85rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2.5px solid var(--ink);
+    background: white;
+  }
+  .tl-event.red::before { background: var(--coral); }
+  .tl-event.amber::before { background: var(--amber); }
+  .tl-event.green::before { background: var(--teal); }
+  .tl-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--ink-muted);
+    font-weight: 600;
+  }
+  .tl-desc {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    line-height: 1.5;
+  }
+  .tl-desc strong { color: var(--ink); }
+
+  /* Footer */
+  footer {
+    text-align: center; padding: 2.5rem 2rem; color: var(--ink-muted);
+    font-size: 0.78rem; border-top: 2.5px solid var(--ink);
+    font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;
+    background: var(--cream-deep);
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .comparison { grid-template-columns: 1fr; }
+    .comparison-arrow { transform: rotate(90deg); }
+    .artifact-grid { grid-template-columns: 1fr 1fr; }
+    .terminal-body { font-size: 0.72rem; }
+    nav { padding: 0.5rem 1rem; }
+    .scorecard { font-size: 0.72rem; }
+    .scorecard th, .scorecard td { padding: 0.4rem 0.6rem; }
+  }
+
+  /* Sparkle */
+  .sparkle { position: fixed; pointer-events: none; z-index: 999; animation: sparkleAnim 1.2s ease-out forwards; }
+  @keyframes sparkleAnim {
+    0% { opacity: 1; transform: scale(0) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1.2) rotate(180deg); }
+    100% { opacity: 0; transform: scale(0.3) rotate(360deg) translateY(-30px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="logo">&check; <span>RO-AI</span> Lab</div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressBar"></div>
+  </div>
+  <div class="slide-counter" id="slideCounter">1 / 14</div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 1: Title -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide title-slide" id="slide-1">
+  <div class="deco deco-circle" style="width: 300px; height: 300px; top: 8%; right: -4%;"></div>
+  <div class="deco deco-circle" style="width: 180px; height: 180px; bottom: 12%; left: -3%;"></div>
+  <div class="deco deco-dot-grid" style="width: 200px; height: 200px; top: 15%; left: 5%;"></div>
+  <div class="deco deco-cross" style="top: 25%; right: 15%;"></div>
+  <div class="deco deco-cross" style="bottom: 30%; left: 12%;"></div>
+
+  <div class="slide-inner">
+    <div class="claude-mascot" style="margin-bottom: 1.5rem;">
+      <div class="face"></div>
+    </div>
+    <div class="session-badge">session 06 &middot; incident-retro-monitors</div>
+    <h1>Incident Retro &rarr;<br><span class="highlight">Shipped Monitors</span></h1>
+    <p class="subtitle">A retro doc lands in your terminal. Thirty minutes later, the observability gaps are catalogued, ticketed, and three Terraform monitors are in a PR.</p>
+    <div class="stats-row" style="margin-top: 2.5rem;">
+      <div class="stat">
+        <div class="stat-value">1</div>
+        <div class="stat-label">conversation</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">12</div>
+        <div class="stat-label">gaps found</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">3</div>
+        <div class="stat-label">monitors shipped</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 2: The Incident -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-2">
+  <div class="deco deco-dot-grid" style="width: 180px; height: 180px; bottom: 5%; right: 3%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">the incident</div>
+    <h2>INC-1243: Requests stop<br>becoming workable.</h2>
+    <p class="lead">Feb 25, 2026. HealthSource requests that normally process instantly start taking 30+ minutes. Customers miss SLA deadlines. The incident lasts 33 hours before the root cause is fixed.</p>
+
+    <div class="incident-badge" style="margin-bottom: 1.5rem;">SEV-2 &middot; 33 HOURS &middot; CUSTOMER-REPORTED</div>
+
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+      <div class="card" style="border-color: var(--coral); box-shadow: 4px 4px 0 var(--coral);">
+        <div class="card-icon">&#x1F4C9;</div>
+        <h4 style="color: var(--coral);">Unindexed Query</h4>
+        <p>A bad query on <code class="inline">ereq_location_option</code> hammered the DB. An FE deploy increased its usage.</p>
+      </div>
+      <div class="card" style="border-color: var(--coral); box-shadow: 4px 4px 0 var(--coral);">
+        <div class="card-icon">&#x1F4A5;</div>
+        <h4 style="color: var(--coral);">Pod Explosion</h4>
+        <p><code class="inline">eipasyncprocessor</code> bloated from 2 to 12 pods the Friday before and never scaled back down.</p>
+      </div>
+      <div class="card" style="border-color: var(--coral); box-shadow: 4px 4px 0 var(--coral);">
+        <div class="card-icon">&#x1F6AB;</div>
+        <h4 style="color: var(--coral);">Scaling Failure</h4>
+        <p><code class="inline">requestworker</code> stuck at 4 pods. HPA didn't trigger. The critical service couldn't keep up.</p>
+      </div>
+    </div>
+
+    <div class="callout coral">
+      <div class="callout-icon">&#x1F6A8;</div>
+      <div class="callout-text">
+        <strong>Detection was human, not automated.</strong> Danielle reported the incident based on customer complaints. No monitor, alert, or dashboard fired first. The retro says plainly: "We do not have monitoring enough to know that there's a problem."
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 3: The Timeline -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-3">
+  <div class="deco deco-circle" style="width: 220px; height: 220px; top: 10%; left: -5%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">timeline</div>
+    <h2>33 hours of whack-a-mole.</h2>
+    <p class="lead">The team tried scaling pods, patching HPAs, and debating risky live schema changes &mdash; all while the root cause (a missing index) was unknown.</p>
+
+    <div class="incident-timeline">
+      <div class="tl-event red">
+        <div class="tl-time">Feb 25, 3:46 PM</div>
+        <div class="tl-desc"><strong>Incident reported.</strong> Danielle flags extreme delays. Customers missing SLAs.</div>
+      </div>
+      <div class="tl-event red">
+        <div class="tl-time">4:31 PM</div>
+        <div class="tl-desc"><strong>Fixing begins.</strong> 11:30 AM deploy had scaled requestworker back to 4. Team ups to 10.</div>
+      </div>
+      <div class="tl-event amber">
+        <div class="tl-time">5:57 PM</div>
+        <div class="tl-desc">Replicas at 15. HPA not scaling properly. Ivan preparing a PR.</div>
+      </div>
+      <div class="tl-event amber">
+        <div class="tl-time">6:41 PM</div>
+        <div class="tl-desc"><strong>Backlog dropping.</strong> 1h52m &rarr; 30min. Short-term fix in place. Root cause still unknown.</div>
+      </div>
+      <div class="tl-event amber">
+        <div class="tl-time">7:28 PM</div>
+        <div class="tl-desc"><strong>Three culprits identified.</strong> eipasyncprocessor (12 pods), requestworker (stuck), DB under pressure.</div>
+      </div>
+      <div class="tl-event amber">
+        <div class="tl-time">Feb 26, 4:03 PM</div>
+        <div class="tl-desc"><strong>Root cause confirmed.</strong> Unindexed <code class="inline">ereq_location_option</code> table. Too risky to fix during business hours.</div>
+      </div>
+      <div class="tl-event green">
+        <div class="tl-time">Feb 27, 1:33 PM</div>
+        <div class="tl-desc"><strong>Index added. Resolved.</strong> DB load drops an order of magnitude. Throughput back to normal.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 4: The Ask -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-4">
+  <div class="deco deco-cross" style="top: 20%; right: 10%;"></div>
+  <div class="deco deco-dot-grid" style="width: 150px; height: 150px; bottom: 8%; left: 4%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">the prompt</div>
+    <h2>One retro doc. One question.</h2>
+    <p class="lead">The retro brief lands in the terminal. The ask is simple: <em>"Find every way we could have seen this coming, and tell me if we have monitors for any of them."</em></p>
+
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+        <div class="terminal-title">~/code/management</div>
+      </div>
+      <div class="terminal-body">
+        <div class="term-line"><span class="term-prompt">here's a retro brief, read thru it and see if you can find the issues in DD during the time period.</span></div>
+        <div class="term-line"><span class="term-prompt" style="color: var(--terminal-yellow);">try to find evidence of the issue in any which way.</span></div>
+        <div class="term-line"><span class="term-prompt" style="color: var(--terminal-yellow);">i want a summary of all the possible ways we COULD have seen something going sideways</span></div>
+        <div class="term-line"><span class="term-prompt" style="color: var(--terminal-yellow);">and if we have monitors or alerts for those things</span></div>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-line"><span class="term-muted">[pastes full INC-1243 retro brief &mdash; ~10K chars]</span></div>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <div class="callout-icon">&#x1F4A1;</div>
+      <div class="callout-text">
+        <strong>The leverage here.</strong> This kind of gap analysis typically takes a senior engineer half a day &mdash; cross-referencing Datadog monitors, codebase configs, Jira tickets, and historical incidents. Claude does it in parallel.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 5: Parallel Investigation -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-5">
+  <div class="deco deco-circle" style="width: 260px; height: 260px; bottom: 5%; right: -6%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">step 1 &middot; investigation</div>
+    <h2>Three agents. Simultaneous.</h2>
+    <p class="lead">Claude dispatches parallel subagents to investigate Datadog, the codebase, and Jira simultaneously. Then it cross-references the observability PRD and existing monitor configs.</p>
+
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+        <div class="terminal-title">~/code/management</div>
+      </div>
+      <div class="terminal-body">
+        <div class="term-line"><span class="term-claude-badge">Claude</span></div>
+        <div class="term-line"><span class="term-claude">Let me dig into this. Launching 3 parallel investigations.</span></div>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-line"><span class="term-tool">  &#x26A1; Agent 1: Datadog &mdash; triggered monitors/alerts Feb 25-27</span></div>
+        <div class="term-line"><span class="term-tool">  &#x26A1; Agent 2: Codebase &mdash; HPA configs, metrics emission, requestworker</span></div>
+        <div class="term-line"><span class="term-tool">  &#x26A1; Agent 3: Jira &mdash; corrective action tickets, unresolved gaps</span></div>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-line"><span class="term-muted">  [also reading: observability PRD, terraform monitor configs, prior Night Light analyses]</span></div>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-line"><span class="term-success">  &#x2713; Jira: 15+ tickets found across monitoring/scaling/resilience</span></div>
+        <div class="term-line"><span class="term-warning">  &#x26A0; Nearly all To Do. Nearly all unassigned.</span></div>
+        <div class="term-line"><span class="term-error">  &#x2717; 0 of 12 signal categories had active alerting monitors</span></div>
+      </div>
+    </div>
+
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+      <div class="card">
+        <div class="card-icon">&#x1F4CA;</div>
+        <h4>Datadog</h4>
+        <p>Searched for triggered monitors, dashboard evidence, and APM traces from the incident window.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#x1F4BB;</div>
+        <h4>Codebase</h4>
+        <p>Read HPA configs, Terraform monitor modules, Helm values, and service metrics code.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#x1F3AB;</div>
+        <h4>Jira</h4>
+        <p>Found 15+ existing tickets &mdash; monitoring, scaling, resilience. Most untouched since creation.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 6: The Scorecard -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-6">
+  <div class="deco deco-dot-grid" style="width: 200px; height: 200px; top: 8%; left: 3%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">the findings</div>
+    <h2>Zero for twelve.</h2>
+    <p class="lead">Claude identified 12 distinct signals that would have caught this incident early. Not a single one had an active alerting monitor.</p>
+
+    <div class="comparison" style="margin-bottom: 2rem;">
+      <div class="comparison-box before">
+        <div class="big-number">0</div>
+        <div class="big-label">signals with active monitors</div>
+      </div>
+      <div class="comparison-arrow">of</div>
+      <div class="comparison-box" style="border-color: var(--ink);">
+        <div class="big-number" style="color: var(--ink);">12</div>
+        <div class="big-label">detectable signal categories</div>
+      </div>
+    </div>
+
+    <table class="scorecard">
+      <thead>
+        <tr>
+          <th>Signal</th>
+          <th>Monitor?</th>
+          <th>Ticket?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Postgres CPU saturation</td><td class="status-no">NO</td><td class="ticket-ref">HEAL-2350</td></tr>
+        <tr><td>Postgres connection failures</td><td class="status-no">NO</td><td class="no-ticket">No ticket</td></tr>
+        <tr><td>Requestworker error rate</td><td class="status-no">NO</td><td class="ticket-ref">HEAL-1267 (Dec '25!)</td></tr>
+        <tr><td>Requestworker HPA ceiling</td><td class="status-no">NO</td><td class="no-ticket">No ticket</td></tr>
+        <tr><td>Azure Storage Queue depth</td><td class="status-no">NO</td><td class="ticket-ref">HEAL-1766</td></tr>
+        <tr><td>Azure Storage Queue age</td><td class="status-no">NO</td><td class="ticket-ref">HEAL-1706</td></tr>
+        <tr><td>eipasyncprocessor pod anomaly</td><td class="status-no">NO</td><td class="ticket-ref">HEAL-944 (Oct '25!)</td></tr>
+        <tr><td>Request processing TAT</td><td class="status-no">NO</td><td class="ticket-ref">In PRD only</td></tr>
+        <tr><td>Slow query / seq scan detection</td><td class="status-no">NO</td><td class="no-ticket">No ticket</td></tr>
+        <tr><td>Deploy &rarr; perf correlation</td><td class="status-no">NO</td><td class="no-ticket">No ticket</td></tr>
+        <tr><td>DB connection pool per-service</td><td class="status-no">NO</td><td class="no-ticket">No ticket</td></tr>
+        <tr><td>KEDA scaling for requestworker</td><td class="status-no">NO</td><td class="no-ticket">No ticket</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 7: Patterns -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-7">
+  <div class="deco deco-circle" style="width: 200px; height: 200px; top: 12%; right: -3%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">patterns</div>
+    <h2>Not a new problem.<br>A recurring one.</h2>
+    <p class="lead">The gap analysis surfaced five systemic patterns &mdash; the kind that only emerge when you cross-reference incidents, tickets, PRDs, and code in one pass.</p>
+
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr;">
+      <div class="card" style="border-color: var(--coral); box-shadow: 4px 4px 0 var(--coral);">
+        <div class="card-icon">&#x1F503;</div>
+        <h4 style="color: var(--coral);">Repeat Failure Mode</h4>
+        <p>INC-1020 (Dec 2025) was the same class &mdash; requestworker failures with no alerting. HEAL-1267 was created. Still To Do, 3 months later.</p>
+      </div>
+      <div class="card" style="border-color: var(--amber); box-shadow: 4px 4px 0 var(--amber);">
+        <div class="card-icon">&#x1F4CB;</div>
+        <h4 style="color: var(--amber);">PRD Without Execution</h4>
+        <p>HEAL-1699 (Observability PRD) documents exactly these gaps: 15% coverage, 0 latency monitors, 0 SLOs. Written but unstarted.</p>
+      </div>
+      <div class="card" style="border-color: var(--amber); box-shadow: 4px 4px 0 var(--amber);">
+        <div class="card-icon">&#x1F47B;</div>
+        <h4 style="color: var(--amber);">Orphan Tickets</h4>
+        <p>15+ monitoring tickets exist. Nearly all To Do, nearly all unassigned. No one owns the observability backlog.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">&#x1F441;</div>
+        <h4>Human Detection</h4>
+        <p>4 of 5 recent incidents were detected by Ops via Slack the next day. This one was customer-reported. Zero automated detection.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-icon">&#x1F50D;</div>
+      <div class="callout-text">
+        <strong>The January analysis already knew.</strong> A Night Light run on Jan 14 flagged HPA + requestworker as a risk. Same cascade pattern. Same gaps. The findings weren't acted on.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 8: From Gaps to Backlog -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-8">
+  <div class="deco deco-cross" style="top: 18%; left: 8%;"></div>
+  <div class="deco deco-dot-grid" style="width: 180px; height: 180px; top: 5%; right: 2%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">step 2 &middot; ticketing</div>
+    <h2>Twelve tickets. One command.</h2>
+    <p class="lead">"Go ahead and make tickets for all of these." Claude creates an epic, 8 new tickets, links 4 pre-existing orphans, and wires the whole tree to the Q1 Reactive Work initiative.</p>
+
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+        <div class="terminal-title">~/code/management</div>
+      </div>
+      <div class="terminal-body">
+        <div class="term-line"><span class="term-prompt">Go ahead and make a ticket for all of these. Make a new epic for this incident 1243 and connect that to our Q1 reactive work PDCR.</span></div>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-line"><span class="term-claude-badge">Claude</span></div>
+        <div class="term-line"><span class="term-tool">  &#x26A1; Creating epic HEAL-2396: INC-1243 Observability Gaps</span></div>
+        <div class="term-line"><span class="term-tool">  &#x26A1; Linking HEAL-2396 &rarr; HEAL-1330 (Q1 Reactive Work)</span></div>
+        <div class="term-line"><span class="term-tool">  &#x26A1; Batch creating 8 new tickets...</span></div>
+        <div class="term-line"><span class="term-tool">  &#x26A1; Linking 4 pre-existing orphan tickets...</span></div>
+        <div class="term-line"><span class="term-success">  &#x2713; 12 total tickets under HEAL-2396</span></div>
+      </div>
+    </div>
+
+    <div class="link-tree">
+      <div><span class="tree-root">HEAL-1330</span> (Q1 Reactive Work)</div>
+      <div>&nbsp;&nbsp;&#x2514;&#x2500; <span class="tree-epic">HEAL-2396</span> (INC-1243 Observability Gaps) &larr; EPIC</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x251C;&#x2500; <span class="tree-new">HEAL-2397</span>&nbsp; Postgres CPU monitor</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x251C;&#x2500; <span class="tree-new">HEAL-2398</span>&nbsp; Postgres connection failure monitor</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x251C;&#x2500; <span class="tree-new">HEAL-2399</span>&nbsp; Requestworker HPA ceiling monitor</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x251C;&#x2500; <span class="tree-new">HEAL-2400</span>&nbsp; Request processing TAT monitor</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x251C;&#x2500; <span class="tree-new">HEAL-2401</span>&nbsp; Slow query anomaly detection</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x251C;&#x2500; <span class="tree-new">HEAL-2402</span>&nbsp; Deploy-correlated regression monitor</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x251C;&#x2500; <span class="tree-new">HEAL-2403</span>&nbsp; DB connection pool per-service monitor</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x251C;&#x2500; <span class="tree-new">HEAL-2404</span>&nbsp; KEDA autoscaling for requestworker</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x251C;&#x2500; <span class="tree-old">HEAL-1267</span>&nbsp; (pre-existing) requestworker failure alerting</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x251C;&#x2500; <span class="tree-old">HEAL-1706</span>&nbsp; (pre-existing) queue message age monitors</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x251C;&#x2500; <span class="tree-old">HEAL-1766</span>&nbsp; (pre-existing) DLQ monitoring</div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2514;&#x2500; <span class="tree-old">HEAL-2350</span>&nbsp; (pre-existing) Postgres CPU remediation</div>
+    </div>
+
+    <div class="info-bar">
+      &#x1F517; All tickets labeled <code class="inline">incident-remediation</code> + <code class="inline">roi-platform</code>. Epic linked via Jira MCP tool.
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 9: Picking Three -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-9">
+  <div class="deco deco-circle" style="width: 240px; height: 240px; bottom: 8%; left: -5%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">step 3 &middot; prioritization</div>
+    <h2>Pick three. Ship today.</h2>
+    <p class="lead">"Pick three based on what gets us the most high impact for the least effort." Claude selects three monitors that are pure Terraform &mdash; no code changes, no deploys, just config.</p>
+
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+      <div class="card" style="border-color: var(--teal); box-shadow: 4px 4px 0 var(--teal);">
+        <div class="card-icon">&#x1F534;</div>
+        <h4 style="color: var(--teal);">Postgres CPU</h4>
+        <p><strong>HEAL-2397.</strong> Root cause signal. One Azure metric. Warn at 80%, critical at 90% sustained 10min.</p>
+      </div>
+      <div class="card" style="border-color: var(--teal); box-shadow: 4px 4px 0 var(--teal);">
+        <div class="card-icon">&#x1F50C;</div>
+        <h4 style="color: var(--teal);">Connection Failures</h4>
+        <p><strong>HEAL-2398.</strong> Cascade trigger. Fires when the DB starts rejecting connections &mdash; the first domino.</p>
+      </div>
+      <div class="card" style="border-color: var(--teal); box-shadow: 4px 4px 0 var(--teal);">
+        <div class="card-icon">&#x1F4C8;</div>
+        <h4 style="color: var(--teal);">HPA at Ceiling</h4>
+        <p><strong>HEAL-2399.</strong> Scaling failure. Fires when any critical service HPA is maxed out for 10+ min.</p>
+      </div>
+    </div>
+
+    <div class="callout teal">
+      <div class="callout-icon">&#x2705;</div>
+      <div class="callout-text">
+        <strong>Why these three?</strong> All are pure Terraform &mdash; no application code changes, no service deploys. They deploy via the existing Atlantis PR workflow. Maximum signal for minimum risk.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 10: Terraform — Postgres CPU -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-10">
+  <div class="deco deco-dot-grid" style="width: 160px; height: 160px; top: 12%; right: 4%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">step 4 &middot; terraform</div>
+    <h2>Writing monitors that match<br>existing conventions.</h2>
+    <p class="lead">Claude read the existing Terraform module, matched the <code class="inline">for_each</code> pattern, variable structure, and alert routing &mdash; then wrote three new resources across four files.</p>
+
+    <div class="code-file">
+      <div class="code-header">
+        <span class="code-icon">&#x2699;</span>
+        <span class="code-filename">modules/datadog-hs-monitors-v2/azure_postgres_monitors.tf</span>
+      </div>
+      <div class="code-body">
+        <div class="term-line"><span class="tf-resource">resource</span> <span class="tf-string">"datadog_monitor"</span> <span class="tf-string">"azure_postgres_cpu_utilization_monitor"</span> <span class="tf-bracket">{</span></div>
+        <div class="term-line">&nbsp;&nbsp;<span class="tf-key">for_each</span> = <span class="tf-var">var.azure_postgres.cpu_utilization.servers</span></div>
+        <div class="term-line">&nbsp;&nbsp;<span class="tf-key">name</span>    = <span class="tf-string">"[HealthSource] Azure Postgres CPU &gt; ${<span class="tf-var">...threshold</span>}% on ${<span class="tf-var">each.value.name</span>}"</span></div>
+        <div class="term-line">&nbsp;&nbsp;<span class="tf-key">type</span>    = <span class="tf-string">"metric alert"</span></div>
+        <div class="term-line">&nbsp;&nbsp;<span class="tf-key">query</span>   = <span class="tf-string">"avg(last_10m):avg:azure.dbforpostgresql_flexibleservers.cpu_percent{</span></div>
+        <div class="term-line"><span class="tf-string">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;resource_name:${each.value.resource_name}} &gt; ${...critical}"</span></div>
+        <div class="term-line">&nbsp;&nbsp;<span class="tf-key">message</span> = <span class="tf-string">"{{#is_alert}} Postgres CPU is critically high..."</span></div>
+        <div class="term-line">&nbsp;&nbsp;<span class="tf-comment"># ... thresholds, tags, evaluation_delay, notify_no_data</span></div>
+        <div class="term-line"><span class="tf-bracket">}</span></div>
+      </div>
+    </div>
+
+    <div class="code-file">
+      <div class="code-header">
+        <span class="code-icon">&#x2699;</span>
+        <span class="code-filename">modules/datadog-hs-monitors-v2/k8s_monitors.tf</span>
+      </div>
+      <div class="code-body">
+        <div class="term-line"><span class="tf-resource">resource</span> <span class="tf-string">"datadog_monitor"</span> <span class="tf-string">"hpa_at_max_replicas"</span> <span class="tf-bracket">{</span></div>
+        <div class="term-line">&nbsp;&nbsp;<span class="tf-key">for_each</span> = <span class="tf-var">var.k8s.hpa_at_max.deployments</span></div>
+        <div class="term-line">&nbsp;&nbsp;<span class="tf-key">name</span>    = <span class="tf-string">"[HealthSource] HPA at max replicas: ${<span class="tf-var">each.value.name</span>}"</span></div>
+        <div class="term-line">&nbsp;&nbsp;<span class="tf-key">query</span>   = <span class="tf-string">"max(last_10m):(</span></div>
+        <div class="term-line"><span class="tf-string">&nbsp;&nbsp;&nbsp;&nbsp;kubernetes_state.hpa.max_replicas{...}</span></div>
+        <div class="term-line"><span class="tf-string">&nbsp;&nbsp;&nbsp;&nbsp;- kubernetes_state.hpa.current_replicas{...}) &lt;= 0"</span></div>
+        <div class="term-line">&nbsp;&nbsp;<span class="tf-comment"># Covers: requestworker, audittrailworker, pdfworker, intakequeueservices</span></div>
+        <div class="term-line">&nbsp;&nbsp;<span class="tf-comment"># References INC-1243 pattern in alert message</span></div>
+        <div class="term-line"><span class="tf-bracket">}</span></div>
+      </div>
+    </div>
+
+    <div class="info-bar">
+      &#x1F4C1; 4 files changed &middot; 189 additions &middot; 0 deletions &middot; All pass <code class="inline">terraform fmt</code>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 11: Ship It -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-11">
+  <div class="deco deco-circle" style="width: 280px; height: 280px; top: 6%; left: -6%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">step 5 &middot; ship</div>
+    <h2>Tickets updated. PR opened.</h2>
+    <p class="lead">Claude assigns the 3 tickets, transitions them to In Progress, creates a clean branch from main using a git worktree (the working tree was messy), and opens a PR.</p>
+
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+        <div class="terminal-title">~/code/healthsource (worktree)</div>
+      </div>
+      <div class="terminal-body">
+        <div class="term-line"><span class="term-claude-badge">Claude</span></div>
+        <div class="term-line"><span class="term-tool">  &#x26A1; Transitioning HEAL-2397, 2398, 2399 &rarr; In Progress</span></div>
+        <div class="term-line"><span class="term-tool">  &#x26A1; Assigning to John Blythe, sprint ROIP.Q1.S4</span></div>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-line"><span class="term-warning">  &#x26A0; Working tree is dirty (329 uncommitted changes)</span></div>
+        <div class="term-line"><span class="term-tool">  &#x26A1; Creating clean worktree from main...</span></div>
+        <div class="term-line"><span class="term-tool">  &#x26A1; Cherry-picking monitor commit into clean branch</span></div>
+        <div class="term-line">&nbsp;</div>
+        <div class="term-line"><span class="term-success">  &#x2713; 4 files changed, 189 insertions(+)</span></div>
+        <div class="term-line"><span class="term-success">  &#x2713; PR #2810 opened &mdash; clean, monitor-only changes</span></div>
+      </div>
+    </div>
+
+    <div class="artifact-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+      <div class="artifact">
+        <div class="artifact-icon">&#x1F3AB;</div>
+        <div class="artifact-label">HEAL-2397</div>
+      </div>
+      <div class="artifact">
+        <div class="artifact-icon">&#x1F3AB;</div>
+        <div class="artifact-label">HEAL-2398</div>
+      </div>
+      <div class="artifact">
+        <div class="artifact-icon">&#x1F3AB;</div>
+        <div class="artifact-label">HEAL-2399</div>
+      </div>
+      <div class="artifact">
+        <div class="artifact-icon">&#x1F500;</div>
+        <div class="artifact-label">PR #2810</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-icon">&#x1F333;</div>
+      <div class="callout-text">
+        <strong>The worktree save.</strong> First PR attempt included 329 unrelated uncommitted changes. Claude caught the problem, created a clean worktree from main, cherry-picked only the monitor commit, and opened a clean PR. Messy repos are normal &mdash; the tooling handles it.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 12: The Full Flow -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-12">
+  <div class="deco deco-cross" style="top: 22%; right: 12%;"></div>
+  <div class="deco deco-dot-grid" style="width: 170px; height: 170px; bottom: 6%; left: 5%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">the full arc</div>
+    <h2>One conversation. Five phases.</h2>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-icon">&#x1F4CB;</div>
+        <div class="step-label">Retro<br>pasted</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="step-icon">&#x1F50D;</div>
+        <div class="step-label">Parallel<br>investigation</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="step-icon">&#x1F4CA;</div>
+        <div class="step-label">Gap<br>analysis</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="step-icon">&#x1F3AB;</div>
+        <div class="step-label">Epic +<br>12 tickets</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="step-icon">&#x1F527;</div>
+        <div class="step-label">Terraform<br>monitors</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step">
+        <div class="step-icon">&#x1F500;</div>
+        <div class="step-label">PR<br>opened</div>
+      </div>
+    </div>
+
+    <div class="artifact-grid" style="grid-template-columns: repeat(5, 1fr);">
+      <div class="artifact">
+        <div class="artifact-icon">&#x1F4CA;</div>
+        <div class="artifact-label">Gap Analysis</div>
+      </div>
+      <div class="artifact">
+        <div class="artifact-icon">&#x1F3C6;</div>
+        <div class="artifact-label">HEAL-2396<br>Epic</div>
+      </div>
+      <div class="artifact">
+        <div class="artifact-icon">&#x1F3AB;</div>
+        <div class="artifact-label">12 Jira<br>Tickets</div>
+      </div>
+      <div class="artifact">
+        <div class="artifact-icon">&#x2699;</div>
+        <div class="artifact-label">3 Terraform<br>Monitors</div>
+      </div>
+      <div class="artifact">
+        <div class="artifact-icon">&#x1F500;</div>
+        <div class="artifact-label">PR #2810</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 13: Division of Labor -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-13">
+  <div class="deco deco-circle" style="width: 200px; height: 200px; bottom: 10%; right: -4%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label">division of labor</div>
+    <h2>What the human did.<br>What Claude did.</h2>
+
+    <table class="division-table">
+      <thead>
+        <tr>
+          <th>Step</th>
+          <th style="text-align: center; width: 80px;">Human</th>
+          <th style="text-align: center; width: 80px;">AI</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Paste retro brief + ask the question</td><td class="check">&#x2713;</td><td class="empty"></td></tr>
+        <tr><td>Parallel investigation (DD, codebase, Jira)</td><td class="empty"></td><td class="check">&#x2713;</td></tr>
+        <tr><td>Cross-reference PRD, prior analyses, existing monitors</td><td class="empty"></td><td class="check">&#x2713;</td></tr>
+        <tr><td>Produce 12-signal gap scorecard</td><td class="empty"></td><td class="check">&#x2713;</td></tr>
+        <tr><td>Say "make tickets for all of these"</td><td class="check">&#x2713;</td><td class="empty"></td></tr>
+        <tr><td>Create epic, 8 tickets, link 4 orphans, wire to initiative</td><td class="empty"></td><td class="check">&#x2713;</td></tr>
+        <tr><td>Say "pick 3 high impact, write terraform"</td><td class="check">&#x2713;</td><td class="empty"></td></tr>
+        <tr><td>Read existing TF module, write 3 monitors across 4 files</td><td class="empty"></td><td class="check">&#x2713;</td></tr>
+        <tr><td>Say "update tickets &amp; create a PR"</td><td class="check">&#x2713;</td><td class="empty"></td></tr>
+        <tr><td>Transition tickets, worktree, clean branch, open PR</td><td class="empty"></td><td class="check">&#x2713;</td></tr>
+        <tr><td>Review the PR, approve the monitors</td><td class="check">&#x2713;</td><td class="empty"></td></tr>
+      </tbody>
+    </table>
+
+    <div class="callout teal">
+      <div class="callout-icon">&#x1F3AF;</div>
+      <div class="callout-text">
+        <strong>5 human prompts. ~30 minutes total.</strong> The human steered direction and made decisions. Claude did the cross-referencing, writing, ticketing, and shipping. That's the pattern.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 14: Takeaways -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide title-slide" id="slide-14">
+  <div class="deco deco-circle" style="width: 300px; height: 300px; bottom: 10%; right: -5%;"></div>
+  <div class="deco deco-dot-grid" style="width: 200px; height: 200px; top: 10%; left: 3%;"></div>
+  <div class="deco deco-cross" style="top: 30%; right: 18%;"></div>
+
+  <div class="slide-inner reveal">
+    <div class="section-label">try it yourself</div>
+    <h2>The playbook.</h2>
+
+    <div class="card-grid" style="grid-template-columns: 1fr 1fr; margin-top: 2rem;">
+      <div class="card" style="border-color: var(--amber); box-shadow: 4px 4px 0 var(--amber);">
+        <div class="card-icon">&#x1F4CB;</div>
+        <h4>Paste any retro doc</h4>
+        <p>Incident retros, post-mortems, on-call handoffs. Ask: "What signals could have caught this? Do we monitor any of them?"</p>
+      </div>
+      <div class="card" style="border-color: var(--amber); box-shadow: 4px 4px 0 var(--amber);">
+        <div class="card-icon">&#x1F3AB;</div>
+        <h4>Ask for tickets</h4>
+        <p>"Make an epic and ticket all the gaps." Claude handles the Jira wiring &mdash; epics, links, labels, initiative connections.</p>
+      </div>
+      <div class="card" style="border-color: var(--amber); box-shadow: 4px 4px 0 var(--amber);">
+        <div class="card-icon">&#x1F527;</div>
+        <h4>Ask for implementation</h4>
+        <p>"Pick the best bang-for-buck and write the code." Claude reads existing conventions and writes code that fits.</p>
+      </div>
+      <div class="card" style="border-color: var(--amber); box-shadow: 4px 4px 0 var(--amber);">
+        <div class="card-icon">&#x1F500;</div>
+        <h4>Ask for a PR</h4>
+        <p>"Update tickets and open a PR." Even with a messy working tree, worktrees keep things clean.</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top: 2rem;">
+      <div class="callout-icon">&#x1F4A1;</div>
+      <div class="callout-text">
+        <strong>The pattern generalizes.</strong> This isn't just for incidents. Any document with implicit action items &mdash; audit reports, security reviews, compliance checklists, architecture reviews &mdash; can be turned into a ticketed, prioritized, partially-shipped backlog in one conversation.
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem;">
+      <div class="session-badge">retro &rarr; gaps &rarr; tickets &rarr; terraform &rarr; PR &middot; one conversation</div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  RO-AI Lab &middot; Session 06 &middot; Incident Retro to Shipped Monitors &middot; Feb 2026
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- JavaScript -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const progressBar = document.getElementById('progressBar');
+  const slideCounter = document.getElementById('slideCounter');
+  const totalSlides = slides.length;
+
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progressBar.style.width = progress + '%';
+    let current = 1;
+    slides.forEach((slide, i) => {
+      if (slide.getBoundingClientRect().top < window.innerHeight / 2) current = i + 1;
+    });
+    slideCounter.textContent = current + ' / ' + totalSlides;
+  }
+
+  window.addEventListener('scroll', updateProgress);
+  updateProgress();
+
+  // Reveal animations
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) entry.target.classList.add('visible');
+    });
+  }, { threshold: 0.15 });
+  reveals.forEach(el => observer.observe(el));
+
+  // Keyboard nav
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault(); navigateSlide(1);
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault(); navigateSlide(-1);
+    }
+  });
+
+  function navigateSlide(dir) {
+    let idx = 0;
+    slides.forEach((s, i) => {
+      if (s.getBoundingClientRect().top < window.innerHeight / 2) idx = i;
+    });
+    const next = Math.max(0, Math.min(totalSlides - 1, idx + dir));
+    slides[next].scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Sparkle on click
+  document.addEventListener('click', (e) => {
+    const sparkle = document.createElement('div');
+    sparkle.className = 'sparkle';
+    sparkle.textContent = ['&#x2728;', '&#x2B50;', '&#x1F31F;'][Math.floor(Math.random() * 3)];
+    sparkle.innerHTML = sparkle.textContent;
+    sparkle.style.left = e.clientX + 'px';
+    sparkle.style.top = e.clientY + 'px';
+    sparkle.style.fontSize = (Math.random() * 12 + 10) + 'px';
+    document.body.appendChild(sparkle);
+    setTimeout(() => sparkle.remove(), 1200);
+  });
+</script>
+</body>
+</html>

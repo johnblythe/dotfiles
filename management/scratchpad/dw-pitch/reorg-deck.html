@@ -1,0 +1,1334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DW Reorg — The Opportunity Window</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF8;
+    --text: #1a1a1a;
+    --text-soft: #4a4a4a;
+    --text-muted: #8a8a8a;
+    --accent: #2856c3;
+    --red: #c42b2b;
+    --green: #1a7a4a;
+    --amber: #b8860b;
+    --rule: #e0ddd8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .slide {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 80px 120px;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .slide.active { display: flex; }
+
+  .slide.active .slide-inner {
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .slide-inner { max-width: 1100px; width: 100%; }
+
+  /* ============================================ */
+  /* TYPOGRAPHY                                    */
+  /* ============================================ */
+
+  .hero-text {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 5.5em;
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+
+  .hero-sub {
+    font-size: 1.4em;
+    font-weight: 300;
+    color: var(--text-soft);
+    line-height: 1.6;
+    margin-top: 32px;
+    max-width: 560px;
+  }
+
+  .slide-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 3.2em;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 40px;
+  }
+
+  .kicker {
+    font-size: 0.7em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .body-text {
+    font-size: 1.15em;
+    line-height: 1.75;
+    color: var(--text-soft);
+    max-width: 540px;
+  }
+
+  .stat-huge {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 9em;
+    font-weight: 400;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+  }
+
+  .stat-label {
+    font-size: 1.1em;
+    color: var(--text-muted);
+    margin-top: 12px;
+    font-weight: 400;
+  }
+
+  .pullquote {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 2.6em;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    max-width: 800px;
+  }
+
+  .pullquote em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .footnote {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    margin-top: 24px;
+    font-weight: 400;
+    max-width: 540px;
+    line-height: 1.6;
+  }
+
+  /* ============================================ */
+  /* LAYOUTS                                       */
+  /* ============================================ */
+
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+
+  .split-wide {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .rule {
+    width: 48px;
+    height: 2px;
+    background: var(--rule);
+    margin: 24px 0;
+  }
+
+  .rule-full {
+    width: 100%;
+    height: 1px;
+    background: var(--rule);
+    margin: 48px 0;
+  }
+
+  /* ============================================ */
+  /* TIMELINE                                      */
+  /* ============================================ */
+
+  .timeline-clean {
+    margin-top: 40px;
+  }
+
+  .tl-item {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 32px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: baseline;
+  }
+
+  .tl-item:last-child { border-bottom: none; }
+
+  .tl-when {
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    text-align: right;
+    padding-top: 2px;
+  }
+
+  .tl-when.now { color: var(--amber); }
+  .tl-when.done { color: var(--text-muted); }
+  .tl-when.future { color: var(--text-muted); opacity: 0.6; }
+
+  .tl-what {
+    font-size: 1.05em;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .tl-detail {
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-weight: 400;
+  }
+
+  /* ============================================ */
+  /* VS LAYOUT                                     */
+  /* ============================================ */
+
+  .vs-layout {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    gap: 0;
+    align-items: start;
+    margin-top: 48px;
+  }
+
+  .vs-side h3 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.6em;
+    font-weight: 400;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+
+  .vs-side p {
+    font-size: 1.05em;
+    line-height: 1.7;
+    color: var(--text-soft);
+  }
+
+  .vs-divider {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 8px;
+  }
+
+  .vs-divider span {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1em;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ============================================ */
+  /* OPTIONS TABLE                                 */
+  /* ============================================ */
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 48px;
+    margin-top: 40px;
+  }
+
+  .option-col {
+    position: relative;
+  }
+
+  .option-col.recommended {
+    padding: 32px;
+    margin: -32px;
+    background: rgba(40, 86, 195, 0.03);
+    border-radius: 4px;
+  }
+
+  .option-letter {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 3em;
+    font-weight: 400;
+    color: var(--rule);
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .option-col.recommended .option-letter {
+    color: var(--accent);
+  }
+
+  .option-name {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.3em;
+    font-weight: 400;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .option-desc {
+    font-size: 0.95em;
+    line-height: 1.65;
+    color: var(--text-soft);
+    margin-bottom: 16px;
+  }
+
+  .option-verdict {
+    font-size: 0.85em;
+    line-height: 1.5;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+  }
+
+  .option-verdict .plus { color: var(--green); font-weight: 600; }
+  .option-verdict .minus { color: var(--red); font-weight: 600; }
+
+  .rec-tag {
+    font-size: 0.65em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+
+  /* ============================================ */
+  /* JOURNEY                                       */
+  /* ============================================ */
+
+  .journey-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    margin-top: 48px;
+    position: relative;
+  }
+
+  .journey-row::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 80px;
+    right: 80px;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .journey-col { text-align: center; position: relative; }
+
+  .journey-num {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 2.4em;
+    font-weight: 400;
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    border-radius: 50%;
+    margin: 0 auto 28px;
+    position: relative;
+    z-index: 1;
+    background: var(--bg);
+  }
+
+  .journey-phase-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.4em;
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+
+  .journey-when {
+    font-size: 0.75em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .journey-detail {
+    font-size: 0.95em;
+    color: var(--text-soft);
+    line-height: 1.65;
+    text-align: left;
+    padding: 0 12px;
+  }
+
+  .journey-detail strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ============================================ */
+  /* CTO JOKE                                      */
+  /* ============================================ */
+
+  .cto-crown {
+    font-size: 4em;
+    display: block;
+    margin-bottom: 8px;
+    animation: wobble 3s ease-in-out infinite;
+  }
+
+  @keyframes wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-4deg); }
+    75% { transform: rotate(4deg); }
+  }
+
+  .cto-name {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 3em;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
+  .cto-title {
+    font-size: 0.75em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    color: var(--amber);
+    margin-top: 8px;
+  }
+
+  .cto-line {
+    width: 2px;
+    height: 48px;
+    background: var(--rule);
+    margin: 24px auto;
+  }
+
+  .cto-box {
+    display: inline-block;
+    padding: 12px 32px;
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    font-size: 0.9em;
+    color: var(--text-muted);
+  }
+
+  .cto-jk {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-style: italic;
+    font-size: 1.3em;
+    color: var(--text-muted);
+    margin-top: 48px;
+  }
+
+  /* ============================================ */
+  /* ASK ITEMS                                     */
+  /* ============================================ */
+
+  .ask-list {
+    margin-top: 40px;
+  }
+
+  .ask-item {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 24px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: baseline;
+  }
+
+  .ask-item:last-child { border-bottom: none; }
+
+  .ask-num {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.6em;
+    color: var(--text-muted);
+  }
+
+  .ask-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .ask-desc {
+    font-size: 0.95em;
+    color: var(--text-soft);
+    line-height: 1.6;
+  }
+
+  /* ============================================ */
+  /* NAVIGATION                                    */
+  /* ============================================ */
+
+  .nav {
+    position: fixed;
+    bottom: 32px;
+    right: 40px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .nav button {
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--text-soft);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    transition: border-color 0.2s;
+  }
+
+  .nav button:hover { border-color: var(--text-muted); }
+
+  .nav .counter {
+    color: var(--text-muted);
+    font-size: 0.75em;
+    padding: 0 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: width 0.4s ease;
+    z-index: 100;
+  }
+
+  .page-num {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    font-size: 0.7em;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* ============================================ */
+  /* BLOCK DIAGRAMS — excalidraw-ish               */
+  /* ============================================ */
+
+  .diagram {
+    position: relative;
+    margin: 32px 0 16px;
+    min-height: 340px;
+  }
+
+  .d-box {
+    position: absolute;
+    border: 2px solid var(--rule);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 0.85em;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--bg);
+    text-align: center;
+    line-height: 1.35;
+    transition: all 0.3s ease;
+  }
+
+  .d-box small {
+    display: block;
+    font-size: 0.78em;
+    font-weight: 400;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  /* Zone containers */
+  .d-zone {
+    position: absolute;
+    border: 2px dashed var(--rule);
+    border-radius: 16px;
+    padding: 16px;
+  }
+
+  .d-zone-label {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: var(--bg);
+    padding: 0 8px;
+    font-size: 0.7em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+  }
+
+  /* Team colors */
+  .d-il { border-color: #7c3aed; background: rgba(124, 58, 237, 0.04); }
+  .d-fqc { border-color: #0891b2; background: rgba(8, 145, 178, 0.04); }
+  .d-plat { border-color: var(--accent); background: rgba(40, 86, 195, 0.04); }
+  .d-dw { border-color: var(--amber); background: rgba(184, 134, 11, 0.04); }
+  .d-sc { border-color: #6b7280; background: rgba(107, 114, 128, 0.04); }
+  .d-tiger { border-color: var(--red); background: rgba(196, 43, 43, 0.06); border-style: dashed; }
+  .d-auto { border-color: var(--green); background: rgba(26, 122, 74, 0.06); }
+
+  .d-dw.drifting {
+    border-style: dashed;
+    opacity: 0.7;
+  }
+
+  /* Arrows */
+  .d-arrow {
+    position: absolute;
+    color: var(--text-muted);
+    font-size: 1.4em;
+    font-weight: 300;
+  }
+
+  .d-arrow-line {
+    position: absolute;
+    border-top: 2px dashed var(--rule);
+  }
+
+  /* Pull/drift indicator */
+  .d-pull {
+    position: absolute;
+    font-size: 0.7em;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  .d-zone-roi {
+    border-color: var(--accent);
+  }
+
+  .d-zone-sc {
+    border-color: #6b7280;
+  }
+
+  /* Future state emphasis */
+  .d-box.absorbed {
+    border-color: var(--green);
+    background: rgba(26, 122, 74, 0.06);
+    border-width: 2px;
+  }
+
+  .d-box.returned {
+    border-color: #6b7280;
+    background: rgba(107, 114, 128, 0.06);
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<!-- ============================================ -->
+<!-- 01. TITLE                                     -->
+<!-- ============================================ -->
+<div class="slide active" id="s1">
+  <div class="slide-inner">
+    <div class="kicker">Digital Workflows</div>
+    <div class="hero-text">
+      The Opportunity<br>Window
+    </div>
+    <div class="hero-sub">
+      A lot is changing at once.<br>
+      Here's how we make it work for us.
+    </div>
+    <div style="margin-top: 80px; font-size: 0.8em; color: var(--text-muted); letter-spacing: 0.08em;">
+      February 2026
+    </div>
+  </div>
+  <div class="page-num">01</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 02. WHAT'S CHANGING                           -->
+<!-- ============================================ -->
+<div class="slide" id="s2">
+  <div class="slide-inner">
+    <div class="kicker">Context</div>
+    <div class="slide-title">Change Is the Only Constant</div>
+
+    <div class="split" style="gap: 60px; align-items: start;">
+      <div class="timeline-clean">
+        <div class="tl-item">
+          <div class="tl-when done">Jan 15</div>
+          <div>
+            <div class="tl-what">Manager departed</div>
+            <div class="tl-detail">EM who shaped this team's culture.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-when now">Now</div>
+          <div>
+            <div class="tl-what">PM + strongest engineer pulled to tiger team</div>
+            <div class="tl-detail">Bomi and Ben K. out for 2–3 months.</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-when now">March</div>
+          <div>
+            <div class="tl-what">Ed out for most of the month</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-when future">April 1</div>
+          <div>
+            <div class="tl-what">Gene moves to new vertical</div>
+          </div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-when future">TBD</div>
+          <div>
+            <div class="tl-what">New EM arrives</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding-top: 20px;">
+        <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 5em; font-weight: 400; line-height: 1; letter-spacing: -0.03em; color: var(--red);">5</div>
+        <div style="font-size: 1.1em; color: var(--text-muted); margin-top: 8px;">major changes<br>in 4 months</div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num">02</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 03. TRANSITION — the anchor                   -->
+<!-- ============================================ -->
+<div class="slide" id="s3">
+  <div class="slide-inner" style="display: flex; flex-direction: column; justify-content: center; min-height: 60vh;">
+    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 3.8em; font-weight: 400; line-height: 1.15; letter-spacing: -0.03em; color: var(--text); max-width: 800px;">
+      This much change is happening regardless.
+    </div>
+    <div style="margin-top: 32px; font-family: 'DM Serif Display', Georgia, serif; font-size: 3.8em; font-weight: 400; line-height: 1.15; letter-spacing: -0.03em; max-width: 800px;">
+      We can let it happen to us, or&nbsp;<span style="color: var(--accent); font-style: italic;">for&nbsp;us.</span>
+    </div>
+  </div>
+  <div class="page-num">03</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 04. THE BIG STATEMENT                         -->
+<!-- ============================================ -->
+<div class="slide" id="s3">
+  <div class="slide-inner">
+    <div class="pullquote">
+      This team was never given a clean break to become <em>something new.</em>
+    </div>
+    <div class="footnote" style="max-width: 620px;">
+      Formed from StratConn engineers about a year ago. Their old culture's
+      center of gravity was strong. But ROI's center of gravity was still
+      stabilizing — within a month of them joining the zone, it took another
+      quarter or two before there was even a stable culture to be drawn into.
+      By then, old habits had set.
+    </div>
+  </div>
+  <div class="page-num">03</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 04. TWO WORLDS                                -->
+<!-- ============================================ -->
+<div class="slide" id="s4">
+  <div class="slide-inner">
+    <div class="kicker">The problem</div>
+    <div class="slide-title">One Team, Two Worlds</div>
+
+    <div class="vs-layout">
+      <div class="vs-side">
+        <h3 style="color: var(--amber);">Where they came from</h3>
+        <p>
+          StratConn. Their roots, their comfort zone,
+          their identity. Almost a year later, the pull
+          is still there.
+        </p>
+        <div class="rule"></div>
+        <p style="font-weight: 500; color: var(--amber); font-size: 0.95em;">
+          Center of gravity never shifted.
+        </p>
+      </div>
+
+      <div class="vs-divider"><span>vs</span></div>
+
+      <div class="vs-side">
+        <h3 style="color: var(--red);">Where they landed</h3>
+        <p>
+          HealthSource / ROI. Never quite fully bought in —
+          and to be fair, the rest of ROI never quite fully
+          bought into them either.
+        </p>
+        <div class="rule"></div>
+        <p style="font-weight: 500; color: var(--red); font-size: 0.95em;">
+          Individually capable. Collectively without ownership.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="page-num">04</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 05. THE EVIDENCE — consolidated               -->
+<!-- ============================================ -->
+<div class="slide" id="s5">
+  <div class="slide-inner">
+    <div class="kicker">The evidence</div>
+    <div class="slide-title">They Don't See It</div>
+
+    <div class="split" style="gap: 60px; align-items: start;">
+      <div>
+        <div style="display: flex; gap: 48px; margin-bottom: 32px;">
+          <div>
+            <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 4.5em; font-weight: 400; line-height: 0.9; color: var(--red);">51d</div>
+            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 8px;">oldest code review</div>
+          </div>
+          <div>
+            <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 4.5em; font-weight: 400; line-height: 0.9; color: var(--red);">13</div>
+            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 8px;">items stuck in review</div>
+          </div>
+        </div>
+
+        <div class="body-text" style="max-width: 100%;">
+          Each workstream is owned by 1–2 people. When they're out,
+          work doesn't slow — it stops. Nobody else picks it up.
+          Nobody else reviews it. Not because they can't —
+          because it doesn't occur to them to try.
+        </div>
+        <div class="rule"></div>
+        <div style="font-size: 0.95em; color: var(--text-muted); line-height: 1.65;">
+          Stuck reviews create ripple effects through dependency
+          chains, but nobody connects those dots. They're so siloed
+          in their own work that they can't see the system they're part of.
+        </div>
+      </div>
+      <div>
+        <div style="display: flex; gap: 32px; margin-bottom: 32px; align-items: baseline;">
+          <div>
+            <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 3.5em; font-weight: 400; line-height: 0.9; color: var(--red);">124</div>
+            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 8px;">pts committed</div>
+          </div>
+          <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 1.5em; color: var(--text-muted);">vs</div>
+          <div>
+            <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 3.5em; font-weight: 400; line-height: 0.9; color: var(--green);">~60</div>
+            <div style="font-size: 0.85em; color: var(--text-muted); margin-top: 8px;">pts capacity</div>
+          </div>
+        </div>
+
+        <div style="font-size: 1.05em; line-height: 1.7; color: var(--text-soft);">
+          They don't know to look at this. They don't know how to
+          assess it. They don't realize committing 2x their capacity
+          is hurting them — not helping.
+        </div>
+        <div class="rule"></div>
+        <div style="font-size: 0.95em; color: var(--text-muted); line-height: 1.65;">
+          Overly siloed in their own heads and their own ownership —
+          which paradoxically becomes a form of no ownership at all.
+          Ignorance isn't bliss here. It's the root cause.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num">05</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 06. THE PATTERN                               -->
+<!-- ============================================ -->
+<div class="slide" id="s6">
+  <div class="slide-inner">
+    <div class="kicker">The pattern</div>
+    <div class="slide-title">Us vs. the World</div>
+
+    <div class="split" style="gap: 60px;">
+      <div>
+        <div class="body-text" style="max-width: 100%; font-size: 1.15em;">
+          There's a recurring theme: when things are hard,
+          the explanation points outward. The codebase is hard.
+          The systems are hard. The domain is hard.
+        </div>
+        <div class="rule"></div>
+        <div class="body-text" style="max-width: 100%;">
+          All of that is true. HealthSource <em>is</em> hard.
+          But the tight coupling, the stalled reviews, the
+          overcommitment — those are internal. And nobody has
+          zoomed out to connect those dots for them.
+        </div>
+      </div>
+      <div>
+        <div style="border-left: 3px solid var(--amber); padding: 24px 0 24px 28px;">
+          <div style="font-size: 1.05em; line-height: 1.8; color: var(--text-soft);">
+            <span style="color: var(--text); font-weight: 500;">What they feel:</span> "HealthSource is hard"<br><br>
+            <span style="color: var(--text); font-weight: 500;">What the data shows:</span> Low interchangeability +
+            poor decomposition + stalled reviews + overcommitment
+            = a system that makes everything harder than it needs to be<br><br>
+            <span style="color: var(--text); font-weight: 500;">What's missing:</span> An outside perspective.
+            Retros haven't cracked it. They need someone to hold up a mirror.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num">06</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 07. THREE PATHS                               -->
+<!-- ============================================ -->
+<div class="slide" id="s7">
+  <div class="slide-inner">
+    <div class="kicker">Options</div>
+    <div class="slide-title">Three Paths Forward</div>
+
+    <div class="options-grid">
+      <div class="option-col">
+        <div class="option-letter">A</div>
+        <div class="option-name">Hold Steady</div>
+        <div class="option-desc">
+          Patch the gaps. Keep DW as-is.
+          Wait for people to return.
+        </div>
+        <div class="option-verdict">
+          <span class="plus">+</span> Least disruption<br>
+          <span class="minus">–</span> Nothing changes
+        </div>
+      </div>
+
+      <div class="option-col">
+        <div class="option-letter">B</div>
+        <div class="option-name">Clean Split</div>
+        <div class="option-desc">
+          Send StratConn people home.
+          Remaining team commits fully to ROI.
+        </div>
+        <div class="option-verdict">
+          <span class="plus">+</span> Clears identity confusion<br>
+          <span class="minus">–</span> Solves structure, not culture
+        </div>
+      </div>
+
+      <div class="option-col recommended">
+        <div class="rec-tag">Recommended</div>
+        <div class="option-letter">C</div>
+        <div class="option-name">Split + Transform</div>
+        <div class="option-desc">
+          StratConn people go home. Remaining team reconstitutes
+          as <strong>Automation</strong> when tiger teams return.
+          Blend with mature ROI engineers.
+        </div>
+        <div class="option-verdict">
+          <span class="plus">+</span> New mission, new culture, real ownership<br>
+          <span class="minus">–</span> Requires patience through the window
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num">07</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 08. DIAGRAM — Today                           -->
+<!-- ============================================ -->
+<div class="slide" id="s8">
+  <div class="slide-inner">
+    <div class="kicker">Option C — Today</div>
+    <div class="slide-title">Where We Are</div>
+
+    <div class="diagram" style="height: 340px;">
+      <!-- ROI Zone -->
+      <div class="d-zone d-zone-roi" style="left: 0; top: 0; width: 560px; height: 320px;">
+        <div class="d-zone-label" style="color: var(--accent);">ROI / HealthSource</div>
+
+        <div class="d-box d-il" style="left: 20px; top: 36px; width: 150px;">
+          Intake &<br>Logging
+        </div>
+
+        <div class="d-box d-fqc" style="left: 20px; top: 150px; width: 150px;">
+          Fulfillment<br>& QC
+        </div>
+
+        <div class="d-box d-plat" style="left: 200px; top: 36px; width: 150px;">
+          Platform
+          <small>Pod 1</small>
+        </div>
+
+        <div class="d-box d-plat" style="left: 200px; top: 150px; width: 150px;">
+          Platform
+          <small>Pod 2</small>
+        </div>
+
+        <!-- DW half out the door -->
+        <div class="d-box d-dw drifting" style="left: 430px; top: 80px; width: 160px;">
+          Digital<br>Workflows
+          <small>7 engineers</small>
+        </div>
+      </div>
+
+      <!-- Connections Zone -->
+      <div class="d-zone d-zone-sc" style="right: 0; top: 60px; width: 200px; height: 200px;">
+        <div class="d-zone-label">Connections</div>
+        <div class="d-box d-sc" style="left: 30px; top: 50px; width: 140px;">
+          StratConn
+        </div>
+      </div>
+    </div>
+
+    <div class="footnote" style="max-width: 100%;">
+      DW sits at the edge of ROI — half out the door, one foot still in Connections. Fully committed to neither.
+    </div>
+  </div>
+  <div class="page-num">08</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 09. DIAGRAM — Tiger Teams + Transition        -->
+<!-- ============================================ -->
+<div class="slide" id="s9">
+  <div class="slide-inner">
+    <div class="kicker">Option C — Transition</div>
+    <div class="slide-title">The Tiger Kings Mobilize</div>
+
+    <div class="diagram" style="height: 360px;">
+      <!-- ROI Zone -->
+      <div class="d-zone d-zone-roi" style="left: 0; top: 0; width: 540px; height: 340px;">
+        <div class="d-zone-label" style="color: var(--accent);">ROI / HealthSource</div>
+
+        <div class="d-box d-il" style="left: 20px; top: 36px; width: 130px;">
+          Intake &<br>Logging
+        </div>
+
+        <div class="d-box d-fqc" style="left: 20px; top: 150px; width: 130px;">
+          Fulfillment<br>& QC
+        </div>
+
+        <div class="d-box d-plat" style="left: 175px; top: 36px; width: 130px;">
+          Platform
+          <small>Pod 1</small>
+        </div>
+
+        <div class="d-box d-plat" style="left: 175px; top: 150px; width: 130px;">
+          Platform
+          <small>Pod 2</small>
+        </div>
+
+        <!-- DW shrinking, pulling in -->
+        <div class="d-box d-dw" style="left: 20px; top: 260px; width: 130px; border-style: solid; opacity: 1;">
+          DW (core)
+          <small>Nina, Pryce, Edd</small>
+        </div>
+
+        <!-- Two tiger teams bursting out -->
+        <div class="d-box d-tiger" style="left: 330px; top: 36px; width: 180px;">
+          &#128005; Tiger Team 1
+          <small style="color: var(--red);">Building automation</small>
+        </div>
+
+        <div class="d-box d-tiger" style="left: 330px; top: 120px; width: 180px;">
+          &#128005; Tiger Team 2
+          <small style="color: var(--red);">Building automation</small>
+        </div>
+      </div>
+
+      <!-- Connections Zone — people returning -->
+      <div class="d-zone d-zone-sc" style="right: 0; top: 120px; width: 200px; height: 190px;">
+        <div class="d-zone-label">Connections</div>
+        <div class="d-box d-sc" style="left: 30px; top: 40px; width: 140px;">
+          StratConn
+        </div>
+        <div class="d-box d-sc returned" style="left: 30px; top: 116px; width: 140px;">
+          Daniel, Dean
+          <small style="color: #6b7280;">&#8592; homecoming</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="footnote" style="max-width: 100%;">
+      StratConn people go home. Two tiger teams — led by our Tiger Kings, Brett & John — are out building the future.
+      Core DW fully commits to ROI. Small team, nowhere to hide.
+    </div>
+  </div>
+  <div class="page-num">09</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 10. DIAGRAM — Future State                    -->
+<!-- ============================================ -->
+<div class="slide" id="s10">
+  <div class="slide-inner">
+    <div class="kicker">Option C — Future</div>
+    <div class="slide-title">The New Identity</div>
+
+    <div class="diagram" style="height: 340px;">
+      <!-- ROI Zone — now fully integrated -->
+      <div class="d-zone d-zone-roi" style="left: 0; top: 0; width: 620px; height: 320px; border-color: var(--green); border-style: solid;">
+        <div class="d-zone-label" style="color: var(--green);">ROI / HealthSource</div>
+
+        <div class="d-box d-il" style="left: 20px; top: 36px; width: 130px;">
+          Intake &<br>Logging
+        </div>
+
+        <div class="d-box d-fqc" style="left: 20px; top: 150px; width: 130px;">
+          Fulfillment<br>& QC
+        </div>
+
+        <div class="d-box d-plat" style="left: 175px; top: 36px; width: 130px;">
+          Platform
+          <small>Pod 1</small>
+        </div>
+
+        <div class="d-box d-plat" style="left: 330px; top: 36px; width: 130px;">
+          Platform
+          <small>Pod 2</small>
+        </div>
+
+        <!-- The new Automation team — fully in ROI -->
+        <div class="d-box d-auto absorbed" style="left: 175px; top: 150px; width: 285px; height: 100px; display: flex; align-items: center; justify-content: center; border-width: 3px;">
+          <div>
+            <div style="font-weight: 700; font-size: 1.1em; color: var(--green);">ROI Automations</div>
+            <small>Core DW + tiger teams re-merged</small>
+            <small>+ mature ROI engineers blended in</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connections Zone — clean and separate -->
+      <div class="d-zone d-zone-sc" style="right: 0; top: 80px; width: 160px; height: 160px; opacity: 0.6;">
+        <div class="d-zone-label">Connections</div>
+        <div class="d-box d-sc" style="left: 20px; top: 40px; width: 120px;">
+          StratConn
+          <small>+ Daniel, Dean</small>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <div class="pullquote" style="font-size: 1.4em; max-width: 700px;">
+        "Digital Workflows" becomes <em>ROI Automations.</em><br>
+        One team. One world. No more straddling.
+      </div>
+    </div>
+  </div>
+  <div class="page-num">10</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 11. HOW WE GET THERE                          -->
+<!-- ============================================ -->
+<div class="slide" id="s11">
+  <div class="slide-inner">
+    <div class="kicker">Option C</div>
+    <div class="slide-title">How We Get There</div>
+
+    <div class="journey-row">
+      <div class="journey-col">
+        <div class="journey-num" style="color: var(--amber); border: 2px solid var(--amber);">1</div>
+        <div class="journey-phase-title" style="color: var(--amber);">Clean Break</div>
+        <div class="journey-when">Feb — Mar</div>
+        <div class="journey-detail">
+          <strong>Daniel & Dean return to StratConn.</strong>
+          Clean, natural — they belong there.
+          No drama. A homecoming.
+        </div>
+      </div>
+
+      <div class="journey-col">
+        <div class="journey-num" style="color: var(--accent); border: 2px solid var(--accent);">2</div>
+        <div class="journey-phase-title" style="color: var(--accent);">Fledgling Team</div>
+        <div class="journey-when">Mar — May</div>
+        <div class="journey-detail">
+          <strong>Nina, Pryce, Edd hold the fort.</strong>
+          Fully commit to ROI. New EM shapes the culture.
+          Small team = everyone steps up.
+        </div>
+      </div>
+
+      <div class="journey-col">
+        <div class="journey-num" style="color: var(--green); border: 2px solid var(--green);">3</div>
+        <div class="journey-phase-title" style="color: var(--green);">New Identity</div>
+        <div class="journey-when">May — Jun</div>
+        <div class="journey-detail">
+          <strong>Tiger teams return.</strong>
+          Reconstitute as Automation. Blend with mature ROI engineers.
+          New mission. Fresh start.
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-full"></div>
+
+    <div class="pullquote" style="font-size: 1.5em; max-width: 700px;">
+      The forcing function is the point. A small team through
+      the transition means <em>nobody coasts.</em>
+    </div>
+  </div>
+  <div class="page-num">11</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 12. THE IDEAL ORG STRUCTURE                   -->
+<!-- ============================================ -->
+<div class="slide" id="s12">
+  <div class="slide-inner" style="text-align: center;">
+    <div class="kicker">Appendix</div>
+    <div class="slide-title" style="margin-bottom: 48px;">The Ideal Org Structure</div>
+
+    <div class="cto-crown">&#128081;</div>
+    <div class="cto-name">John B.</div>
+    <div class="cto-title">Chief Technology Officer</div>
+
+    <div class="cto-line"></div>
+
+    <div class="cto-box">Everyone Else</div>
+
+    <div class="cto-jk">...just kidding. I would never want that job.</div>
+  </div>
+  <div class="page-num">12</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 13. THE ASK                                   -->
+<!-- ============================================ -->
+<div class="slide" id="s13">
+  <div class="slide-inner">
+    <div class="kicker">Next steps</div>
+    <div class="slide-title">The Ask</div>
+
+    <div class="ask-list">
+      <div class="ask-item">
+        <div class="ask-num">1</div>
+        <div>
+          <div class="ask-title">Do we align on direction?</div>
+          <div class="ask-desc">Hold steady, clean split, or split + transform?</div>
+        </div>
+      </div>
+      <div class="ask-item">
+        <div class="ask-num">2</div>
+        <div>
+          <div class="ask-title">Daniel + Dean timing</div>
+          <div class="ask-desc">When do they move back to StratConn? Can we start the conversation this sprint?</div>
+        </div>
+      </div>
+      <div class="ask-item">
+        <div class="ask-num">3</div>
+        <div>
+          <div class="ask-title">Tiger team return plan</div>
+          <div class="ask-desc">When Ben and Bomi come back, what do they come back to? If we pick Option C, we shape the landing zone now.</div>
+        </div>
+      </div>
+      <div class="ask-item">
+        <div class="ask-num">4</div>
+        <div>
+          <div class="ask-title">Who owns the transition?</div>
+          <div class="ask-desc">New EM inherits this. How do we set them up for success?</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-full"></div>
+
+    <div class="pullquote" style="font-size: 1.8em; text-align: center; max-width: 100%;">
+      Same people. Clearer mission. <em>Real ownership.</em>
+    </div>
+  </div>
+  <div class="page-num">13</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 14. FIN                                       -->
+<!-- ============================================ -->
+<div class="slide" id="s14">
+  <div class="slide-inner" style="text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 60vh;">
+    <div style="font-family: 'DM Serif Display', Georgia, serif; font-size: 5em; font-weight: 400; font-style: italic; color: var(--text); letter-spacing: -0.03em;">
+      fin.
+    </div>
+    <div class="rule" style="margin: 40px auto;"></div>
+    <div style="font-size: 1.1em; color: var(--text-muted); font-weight: 400; letter-spacing: 0.06em;">
+      Questions & Conversation
+    </div>
+  </div>
+  <div class="page-num">14</div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button onclick="prev()">&larr;</button>
+  <span class="counter" id="counter">01 / 14</span>
+  <button onclick="next()">&rarr;</button>
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+
+  function show(n) {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, total - 1));
+    slides[current].classList.add('active');
+    progress.style.width = ((current + 1) / total * 100) + '%';
+    counter.textContent = String(current + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+  }
+
+  function next() { show(current + 1); }
+  function prev() { show(current - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    if (e.key === 'Home') { e.preventDefault(); show(0); }
+    if (e.key === 'End') { e.preventDefault(); show(total - 1); }
+  });
+
+  let touchStart = 0;
+  document.addEventListener('touchstart', (e) => { touchStart = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStart - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) { diff > 0 ? next() : prev(); }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

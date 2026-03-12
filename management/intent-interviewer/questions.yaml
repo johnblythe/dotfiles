@@ -1,0 +1,82 @@
+# Intent Interviewer - Stock Question Bank
+# Questions designed to surface implicit knowledge from SMEs
+
+scope_and_boundaries:
+  - question: "In one sentence, what does this service DO?"
+    why: "Forces concise mental model"
+
+  - question: "What does this service explicitly NOT handle that people often assume it does?"
+    why: "Surfaces naming confusion (like searchservices ≠ CIPUI search)"
+
+  - question: "What would break if this service went down for 5 minutes?"
+    why: "Reveals dependencies and criticality"
+
+  - question: "What upstream services call into this? What downstream services does it call?"
+    why: "Maps integration points"
+
+entry_points:
+  - question: "What's the main entry point for the most common use case?"
+    why: "Gives agents a starting point"
+
+  - question: "Are there any 'back doors' - ways things get triggered that aren't obvious from the API?"
+    why: "Surfaces async triggers, scheduled jobs, event listeners"
+
+  - question: "What endpoints/methods should agents NEVER modify without extra review?"
+    why: "Identifies critical paths"
+
+patterns:
+  - question: "What's the 'right way' to add a new feature to this service?"
+    why: "Surfaces unwritten conventions"
+
+  - question: "What patterns exist here that aren't enforced by linters?"
+    why: "Captures tribal knowledge"
+
+  - question: "If you were reviewing a PR, what would make you immediately say 'no, not like that'?"
+    why: "Reveals anti-patterns from experience"
+
+gotchas:
+  - question: "What are the top 3 mistakes new engineers make in this service?"
+    why: "Direct experience-based gotchas"
+
+  - question: "What looks safe but isn't? Any hidden side effects?"
+    why: "Surfaces non-obvious dangers"
+
+  - question: "What assumptions does this code make that aren't checked/enforced?"
+    why: "Reveals implicit contracts"
+
+  - question: "Are there any 'haunted' areas - code everyone avoids touching?"
+    why: "Identifies risky zones"
+
+state_and_data:
+  - question: "What shared state or singletons exist that affect behavior?"
+    why: "Hidden coupling"
+
+  - question: "What caching exists? When does it cause stale data issues?"
+    why: "Cache invalidation gotchas"
+
+  - question: "What data is this service the 'source of truth' for?"
+    why: "Ownership clarity"
+
+external_dependencies:
+  - question: "Which external APIs/services are flaky or slow?"
+    why: "Integration pain points"
+
+  - question: "What retry/timeout configs are critical to get right?"
+    why: "Resilience knowledge"
+
+  - question: "What auth/certs/tokens need periodic attention?"
+    why: "Operational gotchas"
+
+testing:
+  - question: "What's hard to test in this service? What do people skip?"
+    why: "Test gap awareness"
+
+  - question: "What test data setup is required that isn't obvious?"
+    why: "Local dev friction"
+
+history:
+  - question: "What major refactors or rewrites have happened? What's legacy vs current?"
+    why: "Codebase archaeology"
+
+  - question: "What incidents has this service caused? What was learned?"
+    why: "War stories → preventive knowledge"

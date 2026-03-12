@@ -1,0 +1,69 @@
+# Jira Hygiene Configuration
+# Version: 1.0.0
+
+defaults:
+  team: intake-logging
+  project: HEAL  # shared project for all teams
+
+teams:
+  intake-logging:
+    board_id: 8252
+    team_value: "Intake & Logging"
+    label: "roi-intake-logging"
+    sprint_prefix: "IL"
+    description: "Intake & Logging"
+
+  roip-pod1:
+    board_id: 9792
+    team_value: "ROIP 1"
+    sprint_prefix: "ROIP"
+    description: "ROIP Pod 1"
+
+  roip-pod2:
+    board_id: 8253
+    team_value: "ROIP 2"
+    label: "roip-pod-2"
+    sprint_prefix: "ROIP2"
+    description: "ROIP Pod 2"
+
+  fulfillment-qc:
+    board_id: 389
+    team_value: "Fulfillment & QC"
+    label: "roi-fulfillment-qc"
+    sprint_prefix: "FQC"
+    description: "Fulfillment & QC"
+
+  digital-workflows:
+    board_id: 319
+    project: PDC
+    team_value: "Digital Workflows"
+    sprint_prefix: "DW"
+    description: "Digital Workflows"
+
+  newfire:
+    board_id: 3651
+    team_value: "ROI Newfire"
+    sprint_prefix: "Q"
+    description: "ROI Newfire"
+
+thresholds:
+  stale_in_progress_days: 5
+  stale_code_review_days: 3
+  stale_uat_days: 5
+  stale_todo_days: 30
+  max_story_points: 4
+  high_violation_alert: 5
+  wip_limit: 5  # "stop starting, start finishing" threshold
+
+custom_fields:
+  story_points: customfield_10026
+  epic_link: customfield_10014
+  sprint: customfield_10020
+  teams: customfield_10910  # Team(s) multi-select for team filtering
+
+# Slack webhooks (add your webhooks here)
+# Get webhook URL: https://api.slack.com/messaging/webhooks
+slack:
+  default: ""  # fallback webhook
+  # platform: "https://hooks.slack.com/services/XXX/YYY/ZZZ"
+  # stakeholders: "https://hooks.slack.com/services/AAA/BBB/CCC"

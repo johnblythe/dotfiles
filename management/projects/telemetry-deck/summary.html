@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Intake Telemetry: Executive Summary</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: #0a0a0a; color: #e0e0e0; overflow: hidden; }
+  .deck { width: 100vw; height: 100vh; position: relative; }
+  .slide { display: none; width: 100%; height: 100%; padding: 48px 64px; flex-direction: column; justify-content: flex-start; overflow-y: auto; }
+  .slide.active { display: flex; }
+  h1 { font-size: 2.4em; font-weight: 700; color: #fff; margin-bottom: 8px; line-height: 1.15; }
+  h2 { font-size: 1.55em; font-weight: 600; color: #60a5fa; margin-bottom: 10px; }
+  h3 { font-size: 1em; font-weight: 600; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+  p, li { font-size: 0.95em; line-height: 1.5; color: #cbd5e1; }
+  .subtitle { font-size: 1.05em; color: #94a3b8; margin-bottom: 24px; }
+  .highlight { color: #facc15; font-weight: 600; }
+  .highlight-red { color: #f87171; font-weight: 600; }
+  .highlight-green { color: #4ade80; font-weight: 600; }
+  .highlight-blue { color: #60a5fa; font-weight: 600; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; flex: 1; align-items: start; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .four-col { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  th { text-align: left; padding: 6px 10px; color: #94a3b8; font-weight: 600; font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #334155; }
+  td { padding: 6px 10px; border-bottom: 1px solid #1e293b; font-size: 0.88em; }
+  tr:hover td { background: #1e293b; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .card { background: #1e293b; border-radius: 10px; padding: 16px; border: 1px solid #334155; }
+  .big-num { font-size: 2.6em; font-weight: 700; line-height: 1; }
+  .big-label { font-size: 0.78em; color: #94a3b8; margin-top: 4px; }
+  .chart-container { position: relative; flex: 1; min-height: 0; max-height: 45vh; }
+  .nav { position: fixed; bottom: 20px; right: 32px; display: flex; gap: 8px; z-index: 100; }
+  .nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 6px 16px; border-radius: 8px; cursor: pointer; font-size: 0.82em; transition: all 0.15s; }
+  .nav button:hover { background: #475569; }
+  .nav button:disabled { opacity: 0.3; cursor: default; }
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: #3b82f6; transition: width 0.3s; z-index: 100; }
+  .slide-num { position: fixed; bottom: 24px; left: 32px; color: #475569; font-size: 0.78em; z-index: 100; }
+  .quote { border-left: 3px solid #3b82f6; padding: 10px 16px; background: #1e293b; border-radius: 0 8px 8px 0; margin: 10px 0; font-style: italic; }
+  ul { padding-left: 18px; }
+  li { margin-bottom: 5px; }
+  li::marker { color: #475569; }
+  .tag { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 0.75em; font-weight: 600; margin-right: 3px; }
+  .tag-exists { background: #1a3a1a; color: #4ade80; }
+  .tag-gap { background: #3b1f1f; color: #f87171; }
+  .fade-in { animation: fadeIn 0.3s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+<div class="slide-num" id="slideNum"></div>
+
+<div class="deck" id="deck">
+
+<!-- SLIDE 0: TITLE -->
+<div class="slide active" id="s0">
+  <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100%;text-align:center;">
+    <h3>HealthSource Engineering</h3>
+    <h1 style="font-size:2.8em;margin-bottom:16px;">Intake Telemetry POC</h1>
+    <p class="subtitle">What Snowflake already tells us &amp; what we're building next</p>
+    <div style="margin-top:32px;color:#475569;font-size:0.88em;">
+      <p>Source: 90 days production data &middot; <code>HEALTHSOURCE.CONNEX</code></p>
+      <p style="margin-top:6px;">Use &larr; &rarr; to navigate &middot; 9 slides</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 1: THE GAP -->
+<div class="slide" id="s1">
+  <h2>The 35x Gap</h2>
+  <p class="subtitle">Processors are fast. The system is slow.</p>
+  <div class="two-col">
+    <div>
+      <div class="four-col" style="margin-bottom:20px;">
+        <div class="card" style="text-align:center;">
+          <div class="big-num highlight">7 min</div>
+          <div class="big-label">FTI touch time<br>(stopwatch, 4K reqs)</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div class="big-num highlight-red">4 hrs</div>
+          <div class="big-label">Snowflake wall-clock<br>(status transitions, 800K reqs)</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div class="big-num" style="color:#60a5fa;">35x</div>
+          <div class="big-label">Gap between<br>work and lifecycle</div>
+        </div>
+        <div class="card" style="text-align:center;">
+          <div class="big-num" style="color:#c084fc;">65%</div>
+          <div class="big-label">Of rework time<br>is queue, not work</div>
+        </div>
+      </div>
+      <div class="quote">
+        FTI proved processors are fast. Snowflake proves the system is slow. The 3h53m gap is routing, queues, and data quality.
+      </div>
+    </div>
+    <div>
+      <h3>What's already in Snowflake</h3>
+      <table>
+        <thead><tr><th>Data</th><th>Source</th><th class="num">Volume/90d</th></tr></thead>
+        <tbody>
+          <tr><td>Status transitions</td><td>erequest_status_dynamic</td><td class="num">~50M</td></tr>
+          <tr><td>Audit events (422 types)</td><td>erequest_audit_trail_dynamic</td><td class="num">~200M</td></tr>
+          <tr><td>Exception records</td><td>erequest_exception</td><td class="num">~385K</td></tr>
+          <tr><td>QC conflicts</td><td>erequest_qc_conflicts</td><td class="num">~2.9M</td></tr>
+          <tr><td>STORK responses</td><td>nlp_parser_callback_log</td><td class="num">persisted</td></tr>
+        </tbody>
+      </table>
+      <p style="margin-top:12px;font-size:0.82em;color:#64748b;">~60% of the proposed 24-event taxonomy already exists as audit trail data. The real gaps are narrower than assumed.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 2: WHERE THE HOURS BURN -->
+<div class="slide" id="s2">
+  <h2>Where the Hours Burn</h2>
+  <p class="subtitle">Four request journeys &mdash; proportional to actual time spent</p>
+  <div style="flex:1;display:flex;flex-direction:column;gap:16px;margin-top:8px;">
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+        <span style="font-weight:600;">Clean Pass <span style="color:#64748b;font-weight:400;">(81.4%, 658K reqs)</span></span>
+        <span style="font-size:0.88em;color:#94a3b8;">Total: <strong style="color:#fff;">2.8h</strong></span>
+      </div>
+      <div style="display:flex;height:28px;border-radius:6px;overflow:hidden;">
+        <div style="flex:75;background:#22c55e;" title="Active logging 75%"></div>
+        <div style="flex:6;background:#3b82f6;" title="QC 6%"></div>
+        <div style="flex:19;background:#475569;" title="Queue/transit 19%"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+        <span style="font-weight:600;">Had Redo <span style="color:#64748b;font-weight:400;">(13.3%, 108K reqs)</span></span>
+        <span style="font-size:0.88em;color:#94a3b8;">Total: <strong style="color:#facc15;">11.9h</strong> &mdash; only 13% active</span>
+      </div>
+      <div style="display:flex;height:28px;border-radius:6px;overflow:hidden;">
+        <div style="flex:8;background:#22c55e;" title="Initial logging 8%"></div>
+        <div style="flex:58;background:#ef4444;" title="Queue/rework wait 58%"></div>
+        <div style="flex:5;background:#22c55e;" title="Redo logging 5%"></div>
+        <div style="flex:29;background:#475569;" title="Queue/transit 29%"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+        <span style="font-weight:600;">Had Exception <span style="color:#64748b;font-weight:400;">(11.1%, 90K reqs)</span></span>
+        <span style="font-size:0.88em;color:#94a3b8;">Total: <strong style="color:#f87171;">18.5h</strong> &mdash; only 9% active</span>
+      </div>
+      <div style="display:flex;height:28px;border-radius:6px;overflow:hidden;">
+        <div style="flex:9;background:#22c55e;" title="Active work 9%"></div>
+        <div style="flex:40;background:#eab308;" title="Exception queue 40%"></div>
+        <div style="flex:51;background:#475569;" title="Other queue 51%"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;">
+        <span style="font-weight:600;">Sent Back <span style="color:#64748b;font-weight:400;">(0.8%, 6.4K reqs)</span></span>
+        <span style="font-size:0.88em;color:#94a3b8;">Total: <strong style="color:#f87171;">44.2h</strong> &mdash; only 28% active</span>
+      </div>
+      <div style="display:flex;height:28px;border-radius:6px;overflow:hidden;">
+        <div style="flex:28;background:#22c55e;" title="Active work 28%"></div>
+        <div style="flex:16;background:#eab308;" title="Exception queue 16%"></div>
+        <div style="flex:56;background:#ef4444;" title="Back-and-forth 56%"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:16px;font-size:0.78em;color:#64748b;margin-top:4px;">
+      <span><span style="display:inline-block;width:10px;height:10px;background:#22c55e;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Active work</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#ef4444;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Rework queue</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#eab308;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Exception queue</span>
+      <span><span style="display:inline-block;width:10px;height:10px;background:#475569;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Transit/other</span>
+    </div>
+  </div>
+  <div class="four-col" style="margin-top:16px;">
+    <div class="card" style="text-align:center;"><div class="big-num highlight-red">3,222</div><div class="big-label">FTE-equivalents in exception queues/yr</div></div>
+    <div class="card" style="text-align:center;"><div class="big-num highlight">99.1%</div><div class="big-label">QC Verify conflicts are false positives</div></div>
+    <div class="card" style="text-align:center;"><div class="big-num highlight-green">45%</div><div class="big-label">of resubmissions are automatable</div></div>
+    <div class="card" style="text-align:center;"><div class="big-num" style="color:#c084fc;">4.8&times;</div><div class="big-label">Weekend exception queue time vs business hours</div></div>
+  </div>
+</div>
+
+<!-- SLIDE 3: FULFILLMENT EXCEPTIONS DEEP DIVE -->
+<div class="slide" id="s3">
+  <h2>Fulfillment Exceptions: The New Data</h2>
+  <p class="subtitle">Where requests actually get stuck &mdash; and for how long</p>
+  <div class="two-col">
+    <div>
+      <h3>Queue Time by Exception Reason</h3>
+      <table>
+        <thead><tr><th>Reason</th><th class="num">Vol/90d</th><th class="num">Median Wait</th><th class="num">P75</th></tr></thead>
+        <tbody>
+          <tr style="background:#2d1b1b;"><td>Internal Department</td><td class="num">61K</td><td class="num" style="color:#f87171;font-weight:600;">117h (5 days!)</td><td class="num">165h</td></tr>
+          <tr><td>Billing</td><td class="num">10K</td><td class="num" style="color:#f87171;">71h</td><td class="num">168h</td></tr>
+          <tr><td>Physician Approval</td><td class="num">10K</td><td class="num">65h</td><td class="num">120h</td></tr>
+          <tr><td>Cross-Coverage</td><td class="num">18K</td><td class="num">43h</td><td class="num">149h</td></tr>
+          <tr><td>Supervisor Review</td><td class="num">47K</td><td class="num">23h</td><td class="num">70h</td></tr>
+          <tr><td>Global Field Input Required</td><td class="num">54K</td><td class="num">16h</td><td class="num">56h</td></tr>
+          <tr style="background:#1a2e1a;"><td>Clinic</td><td class="num" style="color:#4ade80;font-weight:600;">82K</td><td class="num">15h</td><td class="num">35h</td></tr>
+          <tr><td>FQC Failed</td><td class="num">9K</td><td class="num" style="color:#4ade80;">0h</td><td class="num">0h</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3>What the Comments Reveal</h3>
+      <div class="card" style="margin-bottom:12px;border-color:#f87171;">
+        <h3 style="color:#f87171;">Clinic (82K) &mdash; "NON APPROVED SITE"</h3>
+        <p style="font-size:0.88em;">25K+ variations of the same message. Requests routed to sites that can't process them. A <span class="highlight-green">site approval lookup at routing time</span> prevents these entirely.</p>
+      </div>
+      <div class="card" style="margin-bottom:12px;border-color:#facc15;">
+        <h3 style="color:#facc15;">Global Field Input (54K) &mdash; classification errors</h3>
+        <p style="font-size:0.88em;">"NOT A MEDICAL RECORD REQUEST" (3.4K), "LANGUAGE BARRIER" (914), "PATIENT NOT FOUND" (600+). Requests that should never have reached fulfillment.</p>
+      </div>
+      <div class="card" style="border-color:#c084fc;">
+        <h3 style="color:#c084fc;">Internal Department (61K) &mdash; 5 day median</h3>
+        <p style="font-size:0.88em;">Highest queue time of any reason. Even 30% reduction = <span class="highlight">~250 FTE-equivalents</span> reclaimed.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 4: THE APPROACH -->
+<div class="slide" id="s4">
+  <h2>The Approach: Bridge + Fill Gaps</h2>
+  <p class="subtitle">Don't re-instrument. 70% of needed events already exist in the audit trail.</p>
+  <div class="two-col">
+    <div>
+      <h3>What Already Exists (Audit Trail)</h3>
+      <table style="font-size:0.85em;">
+        <thead><tr><th>Audit Event</th><th>&rarr; Telemetry Event</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag tag-exists">EXISTS</span> ExternalRoiRequestCreated</td><td>roi.intake.request_received</td></tr>
+          <tr><td><span class="tag tag-exists">EXISTS</span> DigitalIntakeRequesterFound</td><td>roi.intake.requester_resolved</td></tr>
+          <tr><td><span class="tag tag-exists">EXISTS</span> ElectronicRequestPatientInfo</td><td>roi.intake.patient_info_extracted</td></tr>
+          <tr><td><span class="tag tag-exists">EXISTS</span> ElectronicRequestReasonInfo</td><td>roi.intake.request_classified</td></tr>
+          <tr><td><span class="tag tag-exists">EXISTS</span> True/SA/Not BOC</td><td>roi.intake.requester_classified</td></tr>
+          <tr><td><span class="tag tag-exists">EXISTS</span> RequestedRecordTypes</td><td>roi.intake.record_types_selected</td></tr>
+          <tr><td><span class="tag tag-exists">EXISTS</span> DeliveryMethodSelected</td><td>roi.intake.delivery_method_selected</td></tr>
+          <tr><td><span class="tag tag-exists">EXISTS</span> AttestationReceived</td><td>roi.intake.attestation_completed</td></tr>
+          <tr><td colspan="2" style="color:#64748b;font-size:0.85em;padding-top:8px;">+ 9 more mapped types (17 total)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <h3>Genuine Gaps (New Events)</h3>
+      <table style="font-size:0.85em;">
+        <thead><tr><th>New Event</th><th>What It Measures</th></tr></thead>
+        <tbody>
+          <tr><td><span class="tag tag-gap">NEW</span> request_opened</td><td>Queue-to-pickup time (JS click)</td></tr>
+          <tr><td><span class="tag tag-gap">NEW</span> data_entry_completed</td><td>Actual logging time (JS submit)</td></tr>
+          <tr><td><span class="tag tag-gap">NEW</span> stork_fields_edited</td><td>STORK accuracy (server-side diff)</td></tr>
+          <tr><td><span class="tag tag-gap">NEW</span> validation_failed</td><td>Pre-validation gaps (structured)</td></tr>
+        </tbody>
+      </table>
+      <div class="card" style="margin-top:16px;background:#0f172a;border-color:#1e3a5f;">
+        <p style="font-size:0.88em;color:#cbd5e1;"><strong style="color:#60a5fa;">Key discovery:</strong> STORK's <code>LetterResult</code> response is already persisted in <code>nlp_parser_callback_log</code> before the processor sees it. Server-side diff at form submit &mdash; no frontend state management needed.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 5: ARCHITECTURE -->
+<div class="slide" id="s5">
+  <h2>Architecture: How It Fits</h2>
+  <p class="subtitle">One new call site in existing code. Everything else is additive.</p>
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;">
+    <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:12px;align-items:center;max-width:900px;margin:0 auto;">
+      <div class="card" style="text-align:center;">
+        <h3 style="color:#ffb6c1;">Frontend (JS)</h3>
+        <p style="font-size:0.82em;">request_opened<br>data_entry_completed</p>
+        <p style="font-size:0.72em;color:#64748b;margin-top:6px;">2 new event emitters<br>on existing handlers</p>
+      </div>
+      <div style="color:#475569;font-size:1.8em;">&rarr;</div>
+      <div class="card" style="text-align:center;border-color:#4ade80;">
+        <h3 style="color:#4ade80;">Java (intakeservices)</h3>
+        <p style="font-size:0.82em;"><strong>TelemetryBridge</strong><br>StorkDiffService<br>SegmentationEnricher<br>ValidationEmitter</p>
+        <p style="font-size:0.72em;color:#64748b;margin-top:6px;">Intercepts audit trail<br>+ 4 new components</p>
+      </div>
+      <div style="color:#475569;font-size:1.8em;">&rarr;</div>
+      <div class="card" style="text-align:center;">
+        <h3 style="color:#60a5fa;">Python (telemetry svc)</h3>
+        <p style="font-size:0.82em;">POST /api/telemetry/event<br>Pydantic validation<br>&rarr; PostgreSQL &rarr; Snowflake</p>
+        <p style="font-size:0.72em;color:#64748b;margin-top:6px;">PRs 2577-2586<br>(already built)</p>
+      </div>
+    </div>
+    <div style="max-width:900px;margin:24px auto 0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+      <div class="card" style="text-align:center;background:#0f172a;"><span class="big-num" style="font-size:1.8em;color:#4ade80;">1</span><div class="big-label">New call site in existing code<br>(RequestAuditTrail → Bridge)</div></div>
+      <div class="card" style="text-align:center;background:#0f172a;"><span class="big-num" style="font-size:1.8em;color:#facc15;">17</span><div class="big-label">Audit types mapped<br>to structured events</div></div>
+      <div class="card" style="text-align:center;background:#0f172a;"><span class="big-num" style="font-size:1.8em;color:#60a5fa;">0</span><div class="big-label">Processor-facing<br>UX changes</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 6: BUILD PLAN -->
+<div class="slide" id="s6">
+  <h2>Build Plan: 5 Slices, 4 Weeks</h2>
+  <p class="subtitle">Each slice produces a demo-able increment</p>
+  <div style="flex:1;">
+    <table style="font-size:0.92em;">
+      <thead><tr><th>Slice</th><th>Week</th><th>What</th><th class="num">Pts</th><th>Demo</th></tr></thead>
+      <tbody>
+        <tr style="background:#1a2e1a;">
+          <td><strong style="color:#4ade80;">V1</strong></td><td>1-2</td>
+          <td>Audit trail bridge + event types + enrichment</td><td class="num">5</td>
+          <td style="font-size:0.85em;">Requester lookup &rarr; structured telemetry event in DB</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#60a5fa;">V2</strong></td><td>3</td>
+          <td>Request opened + data entry timing (JS)</td><td class="num">3</td>
+          <td style="font-size:0.85em;">Open request, submit &rarr; two time-bracketed events</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#c084fc;">V3</strong></td><td>3</td>
+          <td>STORK field diff at form submit</td><td class="num">3</td>
+          <td style="font-size:0.85em;">Correct a STORK field &rarr; <code>fields_changed</code> in metadata</td>
+        </tr>
+        <tr>
+          <td><strong style="color:#facc15;">V4</strong></td><td>4</td>
+          <td>Structured validation failure events</td><td class="num">2</td>
+          <td style="font-size:0.85em;">Missing address &rarr; structured <code>validation_failed</code></td>
+        </tr>
+        <tr>
+          <td><strong style="color:#f87171;">V5</strong></td><td>4</td>
+          <td>Snowflake ETL + initial dashboard</td><td class="num">3</td>
+          <td style="font-size:0.85em;">STORK edit rates, validation failures by site</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px;">
+      <div class="card" style="background:#0f172a;">
+        <h3>Jira Tickets</h3>
+        <p style="font-size:0.85em;">
+          <a href="https://datavant.atlassian.net/browse/HEAL-1973" style="color:#60a5fa;">HEAL-1973</a> (V1) blocks
+          <a href="https://datavant.atlassian.net/browse/HEAL-1974" style="color:#60a5fa;">1974</a>,
+          <a href="https://datavant.atlassian.net/browse/HEAL-1975" style="color:#60a5fa;">1975</a>,
+          <a href="https://datavant.atlassian.net/browse/HEAL-1976" style="color:#60a5fa;">1976</a>,
+          <a href="https://datavant.atlassian.net/browse/HEAL-1977" style="color:#60a5fa;">1977</a><br>
+          Epic: <a href="https://datavant.atlassian.net/browse/HEAL-1430" style="color:#60a5fa;">HEAL-1430</a>
+        </p>
+      </div>
+      <div class="card" style="background:#0f172a;">
+        <h3>Total Effort</h3>
+        <p style="font-size:0.85em;"><span class="highlight">16 story points</span> across 5 stories<br>Scoped to intake/logging only (Stages 1-2)<br>Pattern reusable for fulfillment/QC/delivery later</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 7: WHAT WE'LL DETECT -->
+<div class="slide" id="s7">
+  <h2>What This Enables</h2>
+  <p class="subtitle">Automated detection of efficiency opportunities &mdash; no manual queries</p>
+  <div class="three-col" style="flex:1;align-items:start;gap:16px;">
+    <div class="card" style="border-color:#4ade80;">
+      <h3 style="color:#4ade80;">From Audit Bridge (V1)</h3>
+      <ul style="font-size:0.88em;">
+        <li>Requester lookup success/failure rates by site</li>
+        <li>Request classification distribution</li>
+        <li>BOC classification patterns</li>
+        <li>Record type selection trends</li>
+        <li>Resubmission reasons (structured)</li>
+      </ul>
+      <p style="font-size:0.78em;color:#64748b;margin-top:10px;">~3M events/quarter, zero new instrumentation</p>
+    </div>
+    <div class="card" style="border-color:#60a5fa;">
+      <h3 style="color:#60a5fa;">From New Events (V2-V4)</h3>
+      <ul style="font-size:0.88em;">
+        <li><strong>Queue-to-pickup</strong>: request_opened &minus; request_received</li>
+        <li><strong>Actual logging time</strong>: data_entry_completed &minus; request_opened</li>
+        <li><strong>STORK accuracy</strong>: which fields get corrected, how often</li>
+        <li><strong>Pre-validation gaps</strong>: what's missing, by site &times; channel</li>
+      </ul>
+      <p style="font-size:0.78em;color:#64748b;margin-top:10px;">Automated FTI-equivalent at 250x scale</p>
+    </div>
+    <div class="card" style="border-color:#facc15;">
+      <h3 style="color:#facc15;">Concrete Efficiency Targets</h3>
+      <table style="font-size:0.82em;">
+        <thead><tr><th>Opportunity</th><th class="num">FTEs/yr</th></tr></thead>
+        <tbody>
+          <tr><td>Exception queue SLA</td><td class="num" style="color:#facc15;">~640</td></tr>
+          <tr><td>Weekend triage</td><td class="num">~420</td></tr>
+          <tr><td>Pre-validation gate</td><td class="num">~380</td></tr>
+          <tr><td>Auto-route resubmissions</td><td class="num">~700</td></tr>
+          <tr><td>Verify FP filter</td><td class="num">~50 + 340K reviews</td></tr>
+          <tr style="border-top:2px solid #334155;"><td><strong>Total addressable</strong></td><td class="num" style="color:#facc15;font-weight:600;">~2,190+ FTEs</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE 8: OPEN QUESTIONS + NEXT -->
+<div class="slide" id="s8">
+  <h2>Open Questions &amp; Next Steps</h2>
+  <div class="two-col" style="flex:1;">
+    <div>
+      <h3>Open Questions</h3>
+      <div class="card" style="margin-bottom:12px;">
+        <p style="font-size:0.88em;"><strong style="color:#facc15;">1. Snowflake ETL</strong><br>Does the existing ETL cover <code>hs_audit.user_interaction_events_default</code>? If not, V5 is blocked.</p>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <p style="font-size:0.88em;"><strong style="color:#facc15;">2. Session ID</strong><br>Telemetry schema requires <code>sess_UUID</code>. Where does session tracking live in HealthSource?</p>
+      </div>
+      <div class="card" style="margin-bottom:12px;">
+        <p style="font-size:0.88em;"><strong style="color:#facc15;">3. STORK coverage</strong><br>Does every intake channel go through STORK? Affects V3 scope.</p>
+      </div>
+      <div class="card">
+        <p style="font-size:0.88em;"><strong style="color:#facc15;">4. Bridge transport</strong><br>HTTP (POC) vs Azure Service Bus (prod). Async fire-and-forget either way.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Next Steps</h3>
+      <div class="card" style="border-color:#4ade80;margin-bottom:12px;">
+        <h3 style="color:#4ade80;">Now</h3>
+        <ul style="font-size:0.88em;">
+          <li>Assign HEAL-1973 (V1 bridge) to engineer</li>
+          <li>Answer open questions above</li>
+          <li>Engineer reviews audit trail mapping table in ticket</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:#60a5fa;margin-bottom:12px;">
+        <h3 style="color:#60a5fa;">After V1</h3>
+        <ul style="font-size:0.88em;">
+          <li>V2+V3 can run in parallel (JS vs Java, different codepaths)</li>
+          <li>V4 is smallest (2pts) &mdash; natural pickup for capacity</li>
+          <li>V5 depends on all others for meaningful dashboards</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:#c084fc;">
+        <h3 style="color:#c084fc;">Future</h3>
+        <ul style="font-size:0.88em;">
+          <li>Extend bridge pattern to fulfillment + QC stages</li>
+          <li>Fulfillment exception data (q54-q57) ready for next POC</li>
+          <li>Pattern: bridge first, then targeted new events</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /deck -->
+
+<div class="nav">
+  <button id="prev" onclick="go(-1)">&larr; Prev</button>
+  <button id="next" onclick="go(1)">Next &rarr;</button>
+</div>
+
+<script>
+const slides = document.querySelectorAll('.slide');
+let current = 0;
+
+function go(dir) {
+  slides[current].classList.remove('active');
+  current = Math.max(0, Math.min(slides.length - 1, current + dir));
+  slides[current].classList.add('active');
+  slides[current].classList.add('fade-in');
+  setTimeout(() => slides[current].classList.remove('fade-in'), 350);
+  update();
+}
+
+function update() {
+  document.getElementById('prev').disabled = current === 0;
+  document.getElementById('next').disabled = current === slides.length - 1;
+  document.getElementById('progress').style.width = ((current / (slides.length - 1)) * 100) + '%';
+  document.getElementById('slideNum').textContent = (current + 1) + ' / ' + slides.length;
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); go(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+});
+
+update();
+</script>
+</body>
+</html>

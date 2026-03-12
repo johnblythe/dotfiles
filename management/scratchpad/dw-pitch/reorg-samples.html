@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DW Reorg — The Opportunity Window</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FAFAF8;
+    --text: #1a1a1a;
+    --text-soft: #4a4a4a;
+    --text-muted: #8a8a8a;
+    --accent: #2856c3;
+    --red: #c42b2b;
+    --green: #1a7a4a;
+    --amber: #b8860b;
+    --rule: #e0ddd8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .slide {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 80px 120px;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .slide.active { display: flex; }
+
+  .slide.active .slide-inner {
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .slide-inner {
+    max-width: 1100px;
+    width: 100%;
+  }
+
+  /* ============================================ */
+  /* TYPOGRAPHY                                    */
+  /* ============================================ */
+
+  .hero-text {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 5.5em;
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--text);
+  }
+
+  .hero-sub {
+    font-size: 1.4em;
+    font-weight: 300;
+    color: var(--text-soft);
+    line-height: 1.6;
+    margin-top: 32px;
+    max-width: 560px;
+  }
+
+  .slide-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 3.2em;
+    font-weight: 400;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 40px;
+  }
+
+  .kicker {
+    font-size: 0.7em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .body-text {
+    font-size: 1.15em;
+    line-height: 1.75;
+    color: var(--text-soft);
+    max-width: 540px;
+  }
+
+  .stat-huge {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 9em;
+    font-weight: 400;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+  }
+
+  .stat-label {
+    font-size: 1.1em;
+    color: var(--text-muted);
+    margin-top: 12px;
+    font-weight: 400;
+  }
+
+  .pullquote {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 2.6em;
+    font-weight: 400;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    max-width: 800px;
+  }
+
+  .pullquote em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .footnote {
+    font-size: 0.85em;
+    color: var(--text-muted);
+    margin-top: 24px;
+    font-weight: 400;
+  }
+
+  /* ============================================ */
+  /* LAYOUTS                                       */
+  /* ============================================ */
+
+  .split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: start;
+  }
+
+  .split-wide {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 80px;
+    align-items: center;
+  }
+
+  .rule {
+    width: 48px;
+    height: 2px;
+    background: var(--rule);
+    margin: 24px 0;
+  }
+
+  .rule-full {
+    width: 100%;
+    height: 1px;
+    background: var(--rule);
+    margin: 48px 0;
+  }
+
+  /* ============================================ */
+  /* JOURNEY                                       */
+  /* ============================================ */
+
+  .journey-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    margin-top: 48px;
+    position: relative;
+  }
+
+  .journey-row::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 80px;
+    right: 80px;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  .journey-col {
+    text-align: center;
+    position: relative;
+  }
+
+  .journey-num {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 2.4em;
+    font-weight: 400;
+    width: 44px;
+    height: 44px;
+    line-height: 44px;
+    border-radius: 50%;
+    margin: 0 auto 28px;
+    position: relative;
+    z-index: 1;
+    background: var(--bg);
+  }
+
+  .journey-phase-title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.4em;
+    font-weight: 400;
+    margin-bottom: 6px;
+  }
+
+  .journey-when {
+    font-size: 0.75em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .journey-detail {
+    font-size: 0.95em;
+    color: var(--text-soft);
+    line-height: 1.65;
+    text-align: left;
+    padding: 0 12px;
+  }
+
+  .journey-detail strong {
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  /* ============================================ */
+  /* VS LAYOUT                                     */
+  /* ============================================ */
+
+  .vs-layout {
+    display: grid;
+    grid-template-columns: 1fr 40px 1fr;
+    gap: 0;
+    align-items: start;
+    margin-top: 48px;
+  }
+
+  .vs-side h3 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1.6em;
+    font-weight: 400;
+    margin-bottom: 16px;
+    line-height: 1.2;
+  }
+
+  .vs-side p {
+    font-size: 1.05em;
+    line-height: 1.7;
+    color: var(--text-soft);
+  }
+
+  .vs-divider {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 8px;
+  }
+
+  .vs-divider span {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 1em;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ============================================ */
+  /* NAVIGATION                                    */
+  /* ============================================ */
+
+  .nav {
+    position: fixed;
+    bottom: 32px;
+    right: 40px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .nav button {
+    background: none;
+    border: 1px solid var(--rule);
+    color: var(--text-soft);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8em;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    transition: border-color 0.2s;
+  }
+
+  .nav button:hover { border-color: var(--text-muted); }
+
+  .nav .counter {
+    color: var(--text-muted);
+    font-size: 0.75em;
+    padding: 0 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: width 0.4s ease;
+    z-index: 100;
+  }
+
+  .slide-note {
+    position: fixed;
+    bottom: 32px;
+    left: 40px;
+    font-size: 0.7em;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .page-num {
+    position: absolute;
+    top: 40px;
+    right: 40px;
+    font-size: 0.7em;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<!-- ============================================ -->
+<!-- 1. TITLE                                      -->
+<!-- ============================================ -->
+<div class="slide active" id="s1">
+  <div class="slide-inner">
+    <div class="kicker">Digital Workflows</div>
+    <div class="hero-text">
+      The Opportunity<br>Window
+    </div>
+    <div class="hero-sub">
+      A lot is changing at once.<br>
+      Here's how we make it work for us.
+    </div>
+    <div style="margin-top: 80px; font-size: 0.8em; color: var(--text-muted); letter-spacing: 0.08em;">
+      February 2026
+    </div>
+  </div>
+  <div class="page-num">01</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 2. SETUP — the big statement                  -->
+<!-- ============================================ -->
+<div class="slide" id="s2">
+  <div class="slide-inner">
+    <div class="pullquote">
+      This team was never given a clean break to become <em>something new.</em>
+    </div>
+    <div class="footnote">
+      Formed from StratConn engineers ~1 year ago. The center of gravity never shifted.
+    </div>
+  </div>
+  <div class="page-num">02</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 3. THE TENSION — vs layout                    -->
+<!-- ============================================ -->
+<div class="slide" id="s3">
+  <div class="slide-inner">
+    <div class="kicker">The problem</div>
+    <div class="slide-title">One Team, Two Worlds</div>
+
+    <div class="vs-layout">
+      <div class="vs-side">
+        <h3 style="color: var(--amber);">Where they came from</h3>
+        <p>
+          StratConn. Their roots, their comfort zone,
+          their identity. Almost a year later, the pull
+          is still there.
+        </p>
+        <div class="rule"></div>
+        <p style="font-weight: 500; color: var(--amber); font-size: 0.95em;">
+          Center of gravity never shifted.
+        </p>
+      </div>
+
+      <div class="vs-divider"><span>vs</span></div>
+
+      <div class="vs-side">
+        <h3 style="color: var(--red);">Where they landed</h3>
+        <p>
+          HealthSource / ROI — begrudgingly. "It's hard" became
+          a refrain instead of a problem to solve.
+        </p>
+        <div class="rule"></div>
+        <p style="font-weight: 500; color: var(--red); font-size: 0.95em;">
+          Individually capable. Collectively stuck.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="page-num">03</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 4. ONE BIG NUMBER                             -->
+<!-- ============================================ -->
+<div class="slide" id="s4">
+  <div class="slide-inner">
+    <div class="split-wide">
+      <div>
+        <div class="stat-huge" style="color: var(--red);">51</div>
+        <div class="stat-label">days — oldest pending code review</div>
+      </div>
+      <div>
+        <div class="body-text">
+          13 items stuck in review right now.
+          One blocked review stalls an entire dependency chain.
+        </div>
+        <div class="rule"></div>
+        <div class="body-text" style="font-size: 0.95em; color: var(--text-muted);">
+          Knowledge silos mean nobody else can review what they
+          don't understand. The straddling makes it worse —
+          hard to cross-train when nobody's sure what "home" is.
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-num">04</div>
+</div>
+
+<!-- ============================================ -->
+<!-- 5. THE JOURNEY                                -->
+<!-- ============================================ -->
+<div class="slide" id="s5">
+  <div class="slide-inner">
+    <div class="kicker">Option C — Recommended</div>
+    <div class="slide-title">How We Get There</div>
+
+    <div class="journey-row">
+      <div class="journey-col">
+        <div class="journey-num" style="color: var(--amber); border: 2px solid var(--amber);">1</div>
+        <div class="journey-phase-title" style="color: var(--amber);">Clean Break</div>
+        <div class="journey-when">Feb — Mar</div>
+        <div class="journey-detail">
+          <strong>Daniel & Dean return to StratConn.</strong>
+          Clean, natural — they belong there. No drama. A homecoming.
+        </div>
+      </div>
+
+      <div class="journey-col">
+        <div class="journey-num" style="color: var(--accent); border: 2px solid var(--accent);">2</div>
+        <div class="journey-phase-title" style="color: var(--accent);">Fledgling Team</div>
+        <div class="journey-when">Mar — May</div>
+        <div class="journey-detail">
+          <strong>Nina, Pryce, Edd hold the fort.</strong>
+          Fully commit to ROI. New EM shapes the culture. Small team = everyone steps up.
+        </div>
+      </div>
+
+      <div class="journey-col">
+        <div class="journey-num" style="color: var(--green); border: 2px solid var(--green);">3</div>
+        <div class="journey-phase-title" style="color: var(--green);">New Identity</div>
+        <div class="journey-when">May — Jun</div>
+        <div class="journey-detail">
+          <strong>Tiger teams return.</strong>
+          Reconstitute as Automation. Blend with mature ROI engineers. New mission. Fresh start.
+        </div>
+      </div>
+    </div>
+
+    <div class="rule-full"></div>
+
+    <div class="pullquote" style="font-size: 1.5em; max-width: 700px;">
+      The forcing function is the point. A small team through the transition means <em>nobody coasts.</em>
+    </div>
+  </div>
+  <div class="page-num">05</div>
+</div>
+
+<div class="slide-note">5 sample slides — critique before full build</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button onclick="prev()">&larr;</button>
+  <span class="counter" id="counter">01 / 05</span>
+  <button onclick="next()">&rarr;</button>
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+
+  function show(n) {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, total - 1));
+    slides[current].classList.add('active');
+    progress.style.width = ((current + 1) / total * 100) + '%';
+    counter.textContent = String(current + 1).padStart(2, '0') + ' / ' + String(total).padStart(2, '0');
+  }
+
+  function next() { show(current + 1); }
+  function prev() { show(current - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

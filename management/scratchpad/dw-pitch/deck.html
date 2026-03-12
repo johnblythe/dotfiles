@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DW Better Practices — What's Working & 3 Easy Wins</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #edf0f7;
+    --accent: #1d4ed8;
+    --accent2: #15803d;
+    --accent3: #b45309;
+    --warn: #b91c1c;
+    --text: #0f172a;
+    --muted: #475569;
+    --border: #cbd5e1;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .slide {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px 80px;
+    animation: fadeIn 0.3s ease;
+    overflow-y: auto;
+  }
+
+  .slide.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide-inner {
+    max-width: 1000px;
+    width: 100%;
+  }
+
+  h1 {
+    font-size: 2.8em;
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+  }
+
+  h2 {
+    font-size: 1.8em;
+    font-weight: 600;
+    margin-bottom: 24px;
+    color: var(--accent);
+    letter-spacing: -0.01em;
+  }
+
+  h3 {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--accent2);
+  }
+
+  .subtitle {
+    font-size: 1.3em;
+    color: var(--muted);
+    margin-bottom: 40px;
+    line-height: 1.5;
+  }
+
+  p, li {
+    font-size: 1.15em;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  ul { list-style: none; padding: 0; }
+  ul li {
+    padding: 8px 0;
+    padding-left: 24px;
+    position: relative;
+  }
+  ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 16px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .highlight { color: var(--accent); font-weight: 600; }
+  .good { color: var(--accent2); font-weight: 600; }
+  .warn { color: var(--accent3); font-weight: 600; }
+  .bad { color: var(--warn); font-weight: 600; }
+
+  .big-number {
+    font-size: 4em;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.03em;
+  }
+
+  .big-number-row {
+    display: flex;
+    gap: 60px;
+    margin: 32px 0;
+    flex-wrap: wrap;
+  }
+
+  .big-number-item {
+    text-align: center;
+  }
+
+  .big-number-label {
+    font-size: 0.95em;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  .code-block {
+    background: #1e293b;
+    color: #cbd5e1;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px 24px;
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.95em;
+    line-height: 1.7;
+    margin: 16px 0;
+    overflow-x: auto;
+    white-space: pre;
+    color: var(--muted);
+  }
+
+  .code-block .hl { color: #2563eb; }
+  .code-block .good { color: #16a34a; }
+  .code-block .dim { color: #94a3b8; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 1em;
+  }
+
+  th {
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 2px solid var(--border);
+    color: var(--muted);
+    font-weight: 500;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .bar-chart {
+    margin: 24px 0;
+  }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    margin: 12px 0;
+    gap: 16px;
+  }
+
+  .bar-label {
+    width: 140px;
+    font-size: 0.95em;
+    color: var(--muted);
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 36px;
+    background: #e8ecf2;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+    transition: width 0.8s ease;
+  }
+
+  .bar-value {
+    font-size: 0.95em;
+    font-weight: 600;
+    width: 60px;
+    flex-shrink: 0;
+  }
+
+  .pipeline {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 32px 0;
+    flex-wrap: wrap;
+  }
+
+  .pipeline-stage {
+    padding: 16px 24px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 0.95em;
+    font-weight: 500;
+    position: relative;
+  }
+
+  .pipeline-arrow {
+    font-size: 1.5em;
+    color: var(--border);
+    padding: 0 8px;
+  }
+
+  .flywheel {
+    display: flex;
+    gap: 24px;
+    margin: 24px 0;
+    flex-wrap: wrap;
+  }
+
+  .flywheel-item {
+    flex: 1;
+    min-width: 220px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .flywheel-item h3 {
+    margin-bottom: 8px;
+  }
+
+  .flywheel-item p {
+    font-size: 0.95em;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .flywheel-connector {
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.9em;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+  }
+
+  .quote {
+    font-size: 1.4em;
+    font-style: italic;
+    color: var(--text);
+    border-left: 3px solid var(--accent);
+    padding-left: 24px;
+    margin: 32px 0;
+    line-height: 1.6;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .tag-good { background: rgba(22, 163, 74, 0.12); color: var(--accent2); }
+  .tag-warn { background: rgba(217, 119, 6, 0.12); color: var(--accent3); }
+  .tag-bad { background: rgba(220, 38, 38, 0.12); color: var(--warn); }
+  .tag-info { background: rgba(37, 99, 235, 0.12); color: var(--accent); }
+
+  /* Navigation */
+  .nav {
+    position: fixed;
+    bottom: 24px;
+    right: 32px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    z-index: 100;
+  }
+
+  .nav button {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background 0.15s;
+  }
+
+  .nav button:hover { background: #e2e8f0; }
+
+  .nav .counter {
+    color: var(--muted);
+    font-size: 0.85em;
+    padding: 0 8px;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--accent);
+    transition: width 0.3s ease;
+    z-index: 100;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin: 24px 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+  }
+
+  .section-label {
+    font-size: 0.8em;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .emoji { font-style: normal; }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress"></div>
+
+<!-- ============================================ -->
+<!-- SLIDE 1: Title -->
+<!-- ============================================ -->
+<div class="slide active" id="s1">
+  <div class="slide-inner">
+    <div class="section-label">Digital Workflows Team</div>
+    <h1>What's Working &<br>3 Easy Wins</h1>
+    <p class="subtitle">
+      A look at how DW actually ships — and three small tweaks<br>
+      to unlock ~20% more throughput without changing how you work.
+    </p>
+    <div style="margin-top: 40px; color: var(--muted); font-size: 0.9em;">
+      Sprint DW 2026.1.3 &middot; 65 tickets &middot; 7 engineers &middot; 6 workstreams
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 2: What I Looked At -->
+<!-- ============================================ -->
+<div class="slide" id="s2">
+  <div class="slide-inner">
+    <div class="section-label">Context</div>
+    <h2>What I Looked At</h2>
+    <div class="big-number-row">
+      <div class="big-number-item">
+        <div class="big-number" style="color: var(--accent);">65</div>
+        <div class="big-number-label">Tickets analyzed</div>
+      </div>
+      <div class="big-number-item">
+        <div class="big-number" style="color: var(--accent2);">6</div>
+        <div class="big-number-label">Sprints of history</div>
+      </div>
+      <div class="big-number-item">
+        <div class="big-number" style="color: var(--accent3);">2</div>
+        <div class="big-number-label">Codebases cross-referenced</div>
+      </div>
+    </div>
+    <p style="color: var(--muted); margin-top: 24px;">
+      Every ticket description mapped against actual code paths in HealthSource and IDSB.
+      Not just Jira — the real work.
+    </p>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 3: Act 2 Header -->
+<!-- ============================================ -->
+<div class="slide" id="s3">
+  <div class="slide-inner">
+    <div class="section-label">Part 1</div>
+    <h1 style="color: var(--accent2);">What's Already Great</h1>
+    <p class="subtitle">Three things this team does better than most.</p>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 4: Ben's Decomposition -->
+<!-- ============================================ -->
+<div class="slide" id="s4">
+  <div class="slide-inner">
+    <div class="section-label">What's Great</div>
+    <h2>Ben's Tickets Read Like a Recipe</h2>
+
+    <div class="pipeline">
+      <div class="pipeline-stage" style="background: #1d4ed8; color: #fff;">
+        Tech Spec<br><span style="font-size:0.8em;">2 pts ✓</span>
+      </div>
+      <div class="pipeline-arrow" style="color: #94a3b8;">→</div>
+      <div class="pipeline-stage" style="background: #dbeafe; color: #1e40af; border: 2px solid #93c5fd;">
+        Tracking Table<br><span style="font-size:0.8em;">2 pts</span>
+      </div>
+      <div class="pipeline-arrow" style="color: #94a3b8;">→</div>
+      <div class="pipeline-stage" style="background: #dbeafe; color: #1e40af; border: 2px solid #93c5fd;">
+        Eligibility API<br><span style="font-size:0.8em;">3 pts</span>
+      </div>
+      <div class="pipeline-arrow" style="color: #94a3b8;">→</div>
+      <div class="pipeline-stage" style="background: #dbeafe; color: #1e40af; border: 2px solid #93c5fd;">
+        Modify Flow<br><span style="font-size:0.8em;">2 pts</span>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top: 24px;">
+      <div>
+        <h3>What makes this work</h3>
+        <ul>
+          <li>Each ticket = one deployable artifact</li>
+          <li>Schema DDL included in the description</li>
+          <li>Method signatures defined upfront</li>
+          <li>Any engineer could pick this up cold</li>
+        </ul>
+      </div>
+      <div class="code-block"><span class="dim">-- From the actual ticket description:</span>
+<span class="hl">CREATE TABLE</span> EREQUEST_DF_RETRY (
+  ID <span class="hl">NUMBER</span> PRIMARY KEY,
+  REQUEST_ID <span class="hl">NUMBER NOT NULL</span>,
+  RETRY_COUNT <span class="hl">NUMBER DEFAULT 0</span>,
+  ...
+);
+
+<span class="dim">-- Files: db/migration/V*.sql</span>
+<span class="dim">-- Files: RequestServiceDAO.java/.xml</span></div>
+    </div>
+
+    <div class="quote">Ingredients, steps, done. &nbsp;<span class="tag tag-good">9/10 decomposition</span></div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 5: Nina's Velocity -->
+<!-- ============================================ -->
+<div class="slide" id="s5">
+  <div class="slide-inner">
+    <div class="section-label">What's Great</div>
+    <h2>Nina Ships Because Every Ticket Is a Vertical Slice</h2>
+
+    <div class="two-col">
+      <div>
+        <div class="big-number-item" style="text-align:left; margin-bottom: 24px;">
+          <div class="big-number" style="color: var(--accent2);">55%</div>
+          <div class="big-number-label">Burn at sprint midpoint — best on team</div>
+        </div>
+        <h3>The pattern</h3>
+        <ul>
+          <li>Table Creation → DAO → Model → UI</li>
+          <li>Each sub-task cuts through the full stack</li>
+          <li>Every piece is independently testable</li>
+          <li>Remaining work is small polish (1-2 pts)</li>
+        </ul>
+      </div>
+      <div class="code-block"><span class="good">✓ Done</span>  Table Creation
+<span class="good">✓ Done</span>  DAO Layer
+<span class="good">✓ Done</span>  Model Updates
+<span class="good">✓ Done</span>  UI Integration
+<span class="hl">○ To Do</span>  Spacing / Polish (1 pt)
+<span class="hl">○ To Do</span>  Hover States (2 pts)</div>
+    </div>
+
+    <div class="quote">Ship the hard parts first, polish last. &nbsp;<span class="tag tag-good">8/10 decomposition</span></div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 5b: Pre-Assignment -->
+<!-- ============================================ -->
+<div class="slide" id="s5b">
+  <div class="slide-inner">
+    <div class="section-label">What's Great</div>
+    <h2>Work Gets Assigned at Planning, Not Ad-Hoc</h2>
+
+    <div class="two-col">
+      <div>
+        <div class="big-number-item" style="text-align:left; margin-bottom: 24px;">
+          <div class="big-number" style="color: var(--accent2);">0</div>
+          <div class="big-number-label">Unassigned tickets mid-sprint</div>
+        </div>
+        <p style="font-size: 1.1em;">
+          Every ticket has an owner before the sprint starts.
+          That's uncommon — most teams have unassigned work floating mid-sprint.
+        </p>
+      </div>
+      <div>
+        <h3>Why this matters</h3>
+        <ul>
+          <li>Clear ownership from day one</li>
+          <li>No "who's picking this up?" mid-sprint</li>
+          <li>Engineers can plan their own two weeks</li>
+          <li>Shows real planning discipline</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="quote">You plan like a team that's been doing this a long time. Keep it.</div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 6: Team Throughput -->
+<!-- ============================================ -->
+<div class="slide" id="s6">
+  <div class="slide-inner">
+    <div class="section-label">What's Great</div>
+    <h2>You Know Your Number</h2>
+
+    <div class="big-number-row">
+      <div class="big-number-item">
+        <div class="big-number" style="color: var(--accent2);">~60</div>
+        <div class="big-number-label">Points per sprint (6-sprint avg)</div>
+      </div>
+      <div class="big-number-item">
+        <div class="big-number" style="color: var(--accent2);">88%</div>
+        <div class="big-number-label">Pointing discipline (up from 60%)</div>
+      </div>
+    </div>
+
+    <p style="margin-top: 32px; font-size: 1.1em;">
+      This happened organically. No mandate, no new process.
+      The team found its rhythm.
+    </p>
+    <div class="quote" style="margin-top: 32px;">
+      Knowing your real throughput is rare. Most teams guess. You measured it.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 7: Act 3 Header -->
+<!-- ============================================ -->
+<div class="slide" id="s7">
+  <div class="slide-inner">
+    <div class="section-label">Part 2</div>
+    <h1 style="color: var(--accent3);">What Everyone Already Feels</h1>
+    <p class="subtitle">Four friction points. None are anyone's fault. All are fixable.</p>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 8: Code Review Wall -->
+<!-- ============================================ -->
+<div class="slide" id="s8">
+  <div class="slide-inner">
+    <div class="section-label">Friction</div>
+    <h2>The Code Review Wall</h2>
+
+    <div class="big-number-row">
+      <div class="big-number-item">
+        <div class="big-number" style="color: var(--warn);">13</div>
+        <div class="big-number-label">Items waiting for review right now</div>
+      </div>
+      <div class="big-number-item">
+        <div class="big-number" style="color: var(--warn);">51</div>
+        <div class="big-number-label">Days — oldest pending review</div>
+      </div>
+    </div>
+
+    <div class="bar-chart" style="margin-top: 32px;">
+      <div class="bar-row">
+        <div class="bar-label">50+ days</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 8%; background: #dc2626; color: #fff;">1</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">15-21 days</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 31%; background: #ef4444; color: #fff;">4</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">6-14 days</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 38%; background: #f59e0b; color: #fff;">5</div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">3-5 days</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 23%; background: #3b82f6; color: #fff;">3</div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top: 24px; color: var(--muted);">
+      That's <span class="warn">~30 points of finished work</span> sitting on a shelf.
+      One stuck review blocks the next 2-3 tickets in a chain.
+    </p>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 9: Overcommitment -->
+<!-- ============================================ -->
+<div class="slide" id="s9">
+  <div class="slide-inner">
+    <div class="section-label">Friction</div>
+    <h2>The Signal-to-Noise Problem</h2>
+
+    <div class="bar-chart" style="margin-top: 16px;">
+      <div class="bar-row">
+        <div class="bar-label">Committed</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 100%; background: #dc2626;"></div>
+        </div>
+        <div class="bar-value bad">124 pts</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Capacity</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 48%; background: #16a34a;"></div>
+        </div>
+        <div class="bar-value good">~60 pts</div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label">Done at midpoint</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width: 28%; background: #2563eb;"></div>
+        </div>
+        <div class="bar-value highlight">35 pts</div>
+      </div>
+    </div>
+
+    <div style="margin-top: 40px;">
+      <p style="font-size: 1.15em;">This isn't a performance problem. It's a <span class="warn">visibility problem</span>.</p>
+      <p style="color: var(--muted); margin-top: 12px;">
+        When everything's "in sprint," nothing's prioritized.<br>
+        Right-sizing commitment = clarity, not less ambition.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 9b: Bus Factor / Specialization Risk -->
+<!-- ============================================ -->
+<div class="slide" id="s9b">
+  <div class="slide-inner">
+    <div class="section-label">Friction</div>
+    <h2>The Bus Factor Problem</h2>
+
+    <p style="font-size: 1.15em; margin-bottom: 24px;">
+      Each workstream is owned by 1-2 people. No cross-training. No backup.
+    </p>
+
+    <div class="two-col">
+      <div>
+        <h3>When someone's out</h3>
+        <p style="margin-bottom: 16px;">It's not "second string steps in."</p>
+        <p style="font-size: 1.1em;">It's <span class="warn">the running back playing wide receiver</span>.</p>
+        <p style="color: var(--muted); margin-top: 16px;">
+          A different position. Different skills. Different playbook.
+          The work doesn't just slow down — it stops.
+        </p>
+      </div>
+      <div>
+        <h3>This also explains stuck reviews</h3>
+        <ul>
+          <li>Nobody else knows the workstream well enough to review it</li>
+          <li>Reviews sit because the only qualified reviewer is the author's neighbor — and they're busy</li>
+          <li>Knowledge silos compound: less review → less shared understanding → fewer reviewers</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="quote" style="border-color: var(--accent3);">
+      Not anyone's fault. It's how the work naturally siloed. But it's a risk we can start reducing.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 10: Empty Tickets -->
+<!-- ============================================ -->
+<div class="slide" id="s10">
+  <div class="slide-inner">
+    <div class="section-label">Friction</div>
+    <h2>The Empty Ticket Problem</h2>
+
+    <table>
+      <thead>
+        <tr><th>Ticket</th><th>Points</th><th>Description</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Ticket A</td><td>3 pts</td>
+          <td><span class="bad">4 characters</span></td>
+          <td>In Progress — 7+ weeks</td>
+        </tr>
+        <tr>
+          <td>Ticket B</td><td>3 pts</td>
+          <td><span class="bad">4 characters</span></td>
+          <td>In Progress — 7+ weeks</td>
+        </tr>
+        <tr>
+          <td>Ticket C</td><td>4 pts</td>
+          <td><span class="warn">"manual testing"</span></td>
+          <td>No test plan defined</td>
+        </tr>
+        <tr>
+          <td>Ticket D</td><td>2 pts</td>
+          <td><span class="warn">"check w/ [name]"</span></td>
+          <td>Informal — no AC</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 28px;">
+      <p><span class="warn">6 points</span> of work that nobody can start, review, or help with.</p>
+      <p style="color: var(--muted); margin-top: 8px;">
+        Not because the engineer doesn't know what to do —
+        because the ticket doesn't say.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 11: Act 4 Header -->
+<!-- ============================================ -->
+<div class="slide" id="s11">
+  <div class="slide-inner">
+    <div class="section-label">Part 3</div>
+    <h1 style="color: var(--accent);">Three Tweaks</h1>
+    <p class="subtitle">
+      Not new process. Just making what works visible —<br>
+      and removing what slows you down.
+    </p>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 12: Tweak 1 -->
+<!-- ============================================ -->
+<div class="slide" id="s12">
+  <div class="slide-inner">
+    <div class="section-label">Tweak 1</div>
+    <h2>Write It Down</h2>
+
+    <div class="two-col">
+      <div>
+        <h3>The ask</h3>
+        <p>Before moving to In Progress, define:</p>
+        <ul>
+          <li><span class="highlight">Input</span> — what data/state to start with</li>
+          <li><span class="highlight">Output</span> — what "done" looks like</li>
+          <li><span class="highlight">Touchpoints</span> — which files/services change</li>
+        </ul>
+        <p style="margin-top: 16px; color: var(--muted);">
+          Not a novel. A recipe card.<br>
+          ~15 min per ticket. Saves hours downstream.
+        </p>
+      </div>
+      <div>
+        <h3>You're already doing this</h3>
+        <p>Ben's tickets have schema DDL, method signatures, file paths.
+           That's why his workstream is at 50% burn.</p>
+        <div style="margin-top: 16px;">
+          <span class="tag tag-good">Ben already does this</span>
+          <span class="tag tag-good" style="margin-left: 8px;">Nina's close</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 24px; border-color: var(--accent);">
+      <h3 style="color: var(--accent);">What it unlocks</h3>
+      <p>61% of sprint work is Claude-assistable — but only if the spec exists.
+         This one tweak makes ~24 pts/sprint of boilerplate acceleratable.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 13: Tweak 2 -->
+<!-- ============================================ -->
+<div class="slide" id="s13">
+  <div class="slide-inner">
+    <div class="section-label">Tweak 2</div>
+    <h2>Review It Fast</h2>
+
+    <div class="two-col">
+      <div>
+        <h3>The ask</h3>
+        <p><span class="highlight">48-hour SLA</span> on code reviews.</p>
+        <p style="color: var(--muted); margin-top: 8px;">Not <em>merged</em> in 48h. <em>Reviewed.</em> First pass, comments posted.</p>
+        <ul style="margin-top: 16px;">
+          <li>Each workstream gets a named reviewer</li>
+          <li>If 48h passes, call it out in standup</li>
+          <li>Smaller PRs (from Tweak 1) = faster reviews</li>
+        </ul>
+      </div>
+      <div>
+        <h3>The current cost</h3>
+        <div class="big-number-item" style="text-align: left;">
+          <div class="big-number" style="color: var(--warn); font-size: 3em;">13</div>
+          <div class="big-number-label">Items stuck in review</div>
+        </div>
+        <div class="big-number-item" style="text-align: left; margin-top: 16px;">
+          <div class="big-number" style="color: var(--warn); font-size: 3em;">~30</div>
+          <div class="big-number-label">Points of finished work on a shelf</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 24px; border-color: var(--accent);">
+      <h3 style="color: var(--accent);">What it unlocks</h3>
+      <p>Dependency chains flow. WIP drops. Sprint burns become predictable.
+         Engineers feel momentum instead of waiting.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 14: Tweak 3 -->
+<!-- ============================================ -->
+<div class="slide" id="s14">
+  <div class="slide-inner">
+    <div class="section-label">Tweak 3</div>
+    <h2>Let Claude Handle the Boilerplate</h2>
+
+    <table>
+      <thead>
+        <tr><th>Work Type</th><th>Claude Does</th><th>Engineer Does</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Migration DDL</td>
+          <td><span class="good">Generate SQL + mapper from schema</span></td>
+          <td>Review, adjust, test</td>
+        </tr>
+        <tr>
+          <td>Test scaffolds</td>
+          <td><span class="good">Generate suite from signatures</span></td>
+          <td>Define scenarios, validate</td>
+        </tr>
+        <tr>
+          <td>Service skeleton</td>
+          <td><span class="good">Generate class + method stubs</span></td>
+          <td>Implement business logic</td>
+        </tr>
+        <tr>
+          <td>Config patterns</td>
+          <td><span class="good">Apply existing pattern to new endpoints</span></td>
+          <td>Verify behavior</td>
+        </tr>
+        <tr>
+          <td>Systematic renames</td>
+          <td><span class="good">Find-replace across codebase</span></td>
+          <td>Verify no semantic changes</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="card" style="margin-top: 24px; border-color: var(--accent);">
+      <h3 style="color: var(--accent);">What it unlocks</h3>
+      <p>15-20 pts/sprint of engineer time freed for design and integration.
+         Engineers own the output — Claude drafts, you ship.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 15: Flywheel -->
+<!-- ============================================ -->
+<div class="slide" id="s15">
+  <div class="slide-inner">
+    <div class="section-label">The System</div>
+    <h2>They're a Flywheel</h2>
+
+    <div class="flywheel">
+      <div class="flywheel-item" style="border: 2px solid #15803d; background: #f0fdf4;">
+        <h3 style="color: #15803d;">1. Write It Down</h3>
+        <p>Good specs enable Claude assistance AND faster code reviews.</p>
+        <div class="flywheel-connector">→ feeds Tweak 2 &amp; 3</div>
+      </div>
+      <div class="flywheel-item" style="border: 2px solid #1d4ed8; background: #eff6ff;">
+        <h3 style="color: #1d4ed8;">2. Review Fast</h3>
+        <p>Unblocks dependency chains. Reduces WIP. Predictable burns.</p>
+        <div class="flywheel-connector">→ smaller PRs from Tweak 1</div>
+      </div>
+      <div class="flywheel-item" style="border: 2px solid #b45309; background: #fffbeb;">
+        <h3 style="color: #b45309;">3. Claude Boilerplate</h3>
+        <p>Produces focused PRs that are easier to review. Reinforces spec patterns.</p>
+        <div class="flywheel-connector">→ feeds Tweak 1 &amp; 2</div>
+      </div>
+    </div>
+
+    <div class="quote" style="margin-top: 20px; border-color: var(--accent2); font-size: 1.15em;">
+      Not three separate asks. One system where each piece makes the others easier.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 16: Before/After -->
+<!-- ============================================ -->
+<div class="slide" id="s16">
+  <div class="slide-inner">
+    <div class="section-label">Outcome</div>
+    <h2>Same Team. Same Hours. More Shipped.</h2>
+
+    <table>
+      <thead>
+        <tr><th>Dimension</th><th>Today</th><th>After 2 Sprints</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Sprint commitment</td>
+          <td><span class="warn">124 pts</span> (2x capacity)</td>
+          <td><span class="good">~65 pts</span> (right-sized)</td>
+        </tr>
+        <tr>
+          <td>Midpoint burn</td>
+          <td><span class="warn">28%</span></td>
+          <td><span class="good">~50%</span></td>
+        </tr>
+        <tr>
+          <td>Code review queue</td>
+          <td><span class="bad">13 items, 51 day max</span></td>
+          <td><span class="good">&lt;5 items, 48h SLA</span></td>
+        </tr>
+        <tr>
+          <td>Empty descriptions</td>
+          <td><span class="warn">5 tickets</span></td>
+          <td><span class="good">0</span></td>
+        </tr>
+        <tr>
+          <td>Claude-assisted work</td>
+          <td><span class="warn">0 pts</span></td>
+          <td><span class="good">15-20 pts/sprint</span></td>
+        </tr>
+        <tr>
+          <td>Decomposition avg</td>
+          <td><span class="warn">5.9/10</span></td>
+          <td><span class="good">7+/10</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 17: Close -->
+<!-- ============================================ -->
+<div class="slide" id="s17">
+  <div class="slide-inner" style="text-align: center;">
+    <h1 style="font-size: 3.5em; color: var(--text);">The gap is small.</h1>
+    <p style="font-size: 1.5em; margin-top: 24px; color: var(--text); line-height: 1.6;">
+      You're already doing the hard parts.<br>
+      Let's make the good stuff <span class="good">visible</span> and the friction <span class="highlight">go away</span>.
+    </p>
+    <div style="margin-top: 60px; font-size: 1.2em; color: var(--text);">
+      <span style="color: var(--accent2);">Write it down.</span> &nbsp;&middot;&nbsp;
+      <span style="color: var(--accent);">Review it fast.</span> &nbsp;&middot;&nbsp;
+      <span style="color: var(--accent3);">Let Claude help.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button onclick="prev()">← Prev</button>
+  <span class="counter" id="counter">1 / 17</span>
+  <button onclick="next()">Next →</button>
+</div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+
+  function show(n) {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(n, total - 1));
+    slides[current].classList.add('active');
+    progress.style.width = ((current + 1) / total * 100) + '%';
+    counter.textContent = (current + 1) + ' / ' + total;
+  }
+
+  function next() { show(current + 1); }
+  function prev() { show(current - 1); }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+    if (e.key === 'Home') { e.preventDefault(); show(0); }
+    if (e.key === 'End') { e.preventDefault(); show(total - 1); }
+  });
+
+  // Touch support
+  let touchStart = 0;
+  document.addEventListener('touchstart', (e) => { touchStart = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStart - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) { diff > 0 ? next() : prev(); }
+  });
+
+  show(0);
+</script>
+
+</body>
+</html>

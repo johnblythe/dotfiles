@@ -1,0 +1,25 @@
+hey team - wanted to flag some confluence work i've been building out over the past week or two that might be useful for y'all.
+
+*project/initiative status pages*
+been putting together status pages for our active initiatives under the 🚀 Initiatives section. these give a snapshot of where things are at, blockers, next steps, etc. would love eyes on them and feedback on what's useful vs noise.
+https://datavant.atlassian.net/wiki/pages/viewpage.action?pageId=2306703366
+
+a few examples in there now:
+• DB Scaling (PDCR-294)
+• Search Optimization
+• Uptime Definition and Instrumentation
+• Manual Intake - eRID creation
+
+*AI workflows space*
+also been building out the "AI Think, Therefore AI Am" section as a place for the zone to document how we're using AI tooling. a few things in there now:
+
+• 🧰 Toolbox - reference docs for tools like jira/confluence apis, night light monitoring
+  https://datavant.atlassian.net/wiki/pages/viewpage.action?pageId=2506097052
+• 📚 Examples & Idea Generation - case studies of AI-assisted workflows (there's a datadog monitoring gap one in there rn)
+  https://datavant.atlassian.net/wiki/pages/viewpage.action?pageId=2506686474
+• 🎓 AgEng Upskilling - training/onboarding materials
+  https://datavant.atlassian.net/wiki/pages/viewpage.action?pageId=2485256263
+
+*ask*: feel free to poke around, leave comments, add pages for your teams. if you're doing something interesting with AI tooling - whether it's sprint analysis, ticket triage, whatever - drop it in examples. the goal is to compound what's working so others can steal it.
+
+lmk if questions or if anything's confusing. happy to walk through any of it.

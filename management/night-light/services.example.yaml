@@ -1,0 +1,272 @@
+# Night Light: Service Configuration Example
+# Copy to services.yaml and customize for your environment
+
+# =============================================================================
+# CRITICAL SERVICES - Auth, Security, Core Platform
+# =============================================================================
+services:
+  my-auth-service:
+    code_path: services/auth/
+    description: Authentication, authorization, session management, login
+    critical: true
+    incident_patterns:
+      - "Auth Service Hits Outlier"
+      - "login"
+      - "authentication"
+
+  my-platform-service:
+    code_path: services/platform/
+    description: Core platform, events, configuration
+    critical: true
+
+  my-workflow-service:
+    code_path: services/workflow/
+    description: Workflow engine, approval queues
+    critical: true
+
+# =============================================================================
+# USER-FACING FRONTENDS
+# =============================================================================
+  my-frontend:
+    code_path: frontends/main-ui/
+    description: Main application UI
+    critical: true
+    user_facing: true
+
+  my-admin-ui:
+    code_path: frontends/admin/
+    description: Admin dashboard
+    user_facing: true
+
+# =============================================================================
+# INTAKE / INGEST PIPELINE
+# =============================================================================
+  my-intake-service:
+    code_path: services/intake/
+    description: Document intake, upload, processing
+    critical: true
+    user_facing: true
+
+  my-intake-queue:
+    code_path: services/intake-queue/
+    description: Intake queue management
+
+# =============================================================================
+# SEARCH & QUERY
+# =============================================================================
+  my-search-service:
+    code_path: services/search/
+    description: Search endpoints, query layer
+    critical: true
+    user_facing: true
+
+  my-db-metrics:
+    code_path: monitors/db-metrics/
+    description: Database query monitoring
+
+# =============================================================================
+# DOCUMENT PROCESSING
+# =============================================================================
+  my-pdf-worker:
+    code_path: services/pdf-worker/
+    description: PDF processing worker
+
+  my-ocr-service:
+    code_path: services/ocr/
+    description: OCR processing
+
+# =============================================================================
+# WORKERS & BACKGROUND JOBS
+# =============================================================================
+  my-request-worker:
+    code_path: services/request-worker/
+    description: Request processing worker
+
+  my-audit-worker:
+    code_path: services/audit-worker/
+    description: Audit trail processing
+
+  my-queue-monitor:
+    code_path: services/queue-monitor/
+    description: Queue health monitoring
+    singleton: true
+
+# =============================================================================
+# OTHER SERVICES
+# =============================================================================
+  my-delivery-service:
+    code_path: services/delivery/
+    description: Document/artifact delivery
+
+  my-report-service:
+    code_path: services/reports/
+    description: Report generation
+
+  my-rules-engine:
+    code_path: services/rules/
+    description: Business rules engine
+
+  my-migrations:
+    code_path: services/migrations/
+    description: Database migrations (not runtime)
+    ignore: true
+
+# =============================================================================
+# DATADOG SERVICE ALIASES
+# These appear in DD logs but map to services above
+# =============================================================================
+aliases:
+  my-stage-worker: my-pdf-worker
+  my-transform-worker: my-pdf-worker
+  my-ocr-scheduler: my-ocr-service
+
+# =============================================================================
+# KNOWN INCIDENT PATTERNS
+# Reference for recurring issues
+# =============================================================================
+incident_patterns:
+  INC-001:
+    description: Auth service traffic spike causing login failures
+    monitor: "Auth Service Hits Outlier Monitor"
+    service: my-auth-service
+    symptoms:
+      - "hits >= 1500 in 5m"
+      - "users unable to log in"
+      - "frontend unresponsive"
+    root_causes:
+      - "auth retry storms"
+      - "token validation failures"
+      - "session service overload"
+
+# =============================================================================
+# HYGIENE PATTERNS (Tier 2)
+# =============================================================================
+hygiene_patterns:
+  # --------------------------------------------------------------------------
+  # Core patterns (built-in to PROMPT.md, documented here for reference)
+  # --------------------------------------------------------------------------
+  core_npe:
+    name: NullPointerException
+    query: "NullPointerException service:my-*"
+    category: code_quality
+    effort: small
+    description: Null reference errors indicating missing null checks
+
+  core_illegal_arg:
+    name: IllegalArgumentException
+    query: "IllegalArgumentException service:my-*"
+    category: input_validation
+    effort: small
+    description: Input validation failures
+
+  core_deprecated:
+    name: Deprecation warnings
+    query: "status:warn @message:*deprecated*"
+    category: tech_debt
+    effort: medium
+    description: Usage of deprecated APIs that should be migrated
+
+  core_timeout:
+    name: Timeout errors
+    query: 'status:error timeout OR "timed out" service:my-*'
+    category: performance
+    effort: small
+    description: Operation timeouts indicating performance or config issues
+
+  core_connection:
+    name: Connection failures
+    query: 'status:error "connection refused" OR "connection reset" service:my-*'
+    category: infrastructure
+    effort: medium
+    description: Network/connection issues
+
+  # --------------------------------------------------------------------------
+  # Service-specific patterns (extend as needed)
+  # --------------------------------------------------------------------------
+  search_slow_query:
+    name: Slow search queries
+    query: 'service:my-search-service "slow query" OR "query timeout"'
+    category: performance
+    effort: medium
+    services: [my-search-service]
+    description: Search queries exceeding performance thresholds
+    suggested_fix: Review query plans, add indexes, or implement caching
+
+  workflow_engine_error:
+    name: Workflow engine errors
+    query: 'service:my-workflow-service "ENGINE-" status:error'
+    category: workflow
+    effort: medium
+    services: [my-workflow-service]
+    description: Workflow engine errors in processing
+    suggested_fix: Check process definitions and delegate implementations
+
+  ocr_failure:
+    name: OCR processing failures
+    query: 'service:my-ocr-service "OCR failed" OR "recognition error"'
+    category: document_processing
+    effort: medium
+    services: [my-ocr-service, my-intake-service]
+    description: Document OCR failures
+    suggested_fix: Check image quality thresholds, OCR service health
+
+  auth_token_expiry:
+    name: Token expiry issues
+    query: 'service:my-auth-service "token expired" OR "invalid token"'
+    category: auth
+    effort: small
+    services: [my-auth-service]
+    description: Authentication token issues
+    suggested_fix: Review token TTL settings, refresh logic
+
+  db_connection_pool:
+    name: Database connection pool exhaustion
+    query: 'service:my-* "connection pool" OR "no available connections"'
+    category: infrastructure
+    effort: medium
+    description: Database connection pool issues
+    suggested_fix: Tune pool size, check for connection leaks
+
+# =============================================================================
+# HYGIENE PATTERN CATEGORIES
+# =============================================================================
+hygiene_categories:
+  code_quality:
+    icon: "🔧"
+    description: Code bugs and quality issues
+    typical_effort: small
+
+  input_validation:
+    icon: "🛡️"
+    description: Input validation and sanitization gaps
+    typical_effort: small
+
+  tech_debt:
+    icon: "📚"
+    description: Technical debt and deprecated usage
+    typical_effort: medium
+
+  performance:
+    icon: "⚡"
+    description: Performance and latency issues
+    typical_effort: medium
+
+  infrastructure:
+    icon: "🏗️"
+    description: Infrastructure and connectivity issues
+    typical_effort: medium
+
+  workflow:
+    icon: "⚙️"
+    description: Workflow and process errors
+    typical_effort: medium
+
+  document_processing:
+    icon: "📄"
+    description: Document processing failures
+    typical_effort: medium
+
+  auth:
+    icon: "🔐"
+    description: Authentication and authorization issues
+    typical_effort: small

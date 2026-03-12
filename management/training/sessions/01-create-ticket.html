@@ -1,0 +1,1560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RO-AI Lab | Session 1: From Slack Thread to Jira Ticket in 30 Seconds</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0f0f13;
+    --surface: #1a1a24;
+    --surface-2: #22222e;
+    --border: #2d2d3d;
+    --text: #e4e4ed;
+    --text-muted: #8888a0;
+    --accent: #d97706;
+    --accent-soft: #d9770622;
+    --claude-orange: #d97706;
+    --claude-cream: #faf5ee;
+    --terminal-green: #4ade80;
+    --terminal-blue: #60a5fa;
+    --terminal-yellow: #fbbf24;
+    --terminal-red: #f87171;
+    --terminal-purple: #c084fc;
+    --slack-purple: #611f69;
+    --jira-blue: #0052cc;
+    --success: #22c55e;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ── Navigation ── */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(15, 15, 19, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0.75rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+
+  nav .logo {
+    font-size: 1.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--claude-orange), #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+  }
+
+  nav .progress-track {
+    flex: 1;
+    height: 4px;
+    background: var(--surface-2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  nav .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--claude-orange), #f59e0b);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  nav .slide-counter {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  /* ── Slides ── */
+  .slide {
+    min-height: 100vh;
+    padding: 6rem 2rem 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .slide-inner {
+    max-width: 960px;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ── Title Slide ── */
+  .slide.title-slide {
+    text-align: center;
+  }
+
+  .title-slide h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+
+  .title-slide h1 .highlight {
+    background: linear-gradient(135deg, var(--claude-orange), #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .title-slide .subtitle {
+    font-size: 1.3rem;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+
+  .title-slide .session-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    background: var(--accent-soft);
+    border: 1px solid var(--claude-orange);
+    border-radius: 999px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--claude-orange);
+    margin-bottom: 3rem;
+  }
+
+  /* ── Claude Mascot ── */
+  .claude-mascot {
+    display: inline-block;
+    position: relative;
+  }
+
+  .claude-mascot .face {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--claude-orange), #f59e0b);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    box-shadow: 0 0 30px rgba(217, 119, 6, 0.3);
+    animation: float 3s ease-in-out infinite;
+    position: relative;
+  }
+
+  .claude-mascot .face::before {
+    content: '✦';
+    color: white;
+    font-size: 1.8rem;
+  }
+
+  .claude-mascot.small .face {
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
+  }
+
+  .claude-mascot.small .face::before {
+    font-size: 1rem;
+  }
+
+  .claude-mascot.tiny .face {
+    width: 24px;
+    height: 24px;
+  }
+
+  .claude-mascot.tiny .face::before {
+    font-size: 0.7rem;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* ── Section Headers ── */
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--claude-orange);
+    margin-bottom: 1rem;
+  }
+
+  h2 {
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  p.lead {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    max-width: 700px;
+    margin-bottom: 2rem;
+  }
+
+  /* ── Terminal Window ── */
+  .terminal {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    line-height: 1.7;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    margin: 1.5rem 0;
+  }
+
+  .terminal-header {
+    background: #161b22;
+    padding: 0.6rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid #30363d;
+  }
+
+  .terminal-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .terminal-dot.red { background: #ff5f57; }
+  .terminal-dot.yellow { background: #ffbd2e; }
+  .terminal-dot.green { background: #28c840; }
+
+  .terminal-title {
+    flex: 1;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #8b949e;
+  }
+
+  .terminal-body {
+    padding: 1.25rem;
+    overflow-x: auto;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .terminal-body::-webkit-scrollbar { width: 6px; }
+  .terminal-body::-webkit-scrollbar-track { background: transparent; }
+  .terminal-body::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+
+  .term-line {
+    margin-bottom: 0.25rem;
+    opacity: 0;
+    animation: termFadeIn 0.3s ease forwards;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .term-line.visible { opacity: 1; }
+
+  @keyframes termFadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .term-prompt {
+    color: var(--terminal-green);
+  }
+
+  .term-prompt::before {
+    content: '❯ ';
+    color: var(--claude-orange);
+  }
+
+  .term-user {
+    color: var(--terminal-blue);
+  }
+
+  .term-claude {
+    color: var(--text);
+    padding-left: 0;
+  }
+
+  .term-claude-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: linear-gradient(135deg, rgba(217, 119, 6, 0.2), rgba(245, 158, 11, 0.1));
+    border: 1px solid rgba(217, 119, 6, 0.3);
+    padding: 0.1rem 0.5rem;
+    border-radius: 4px;
+    color: var(--claude-orange);
+    font-size: 0.75rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .term-claude-badge::before {
+    content: '✦';
+    font-size: 0.6rem;
+  }
+
+  .term-tool {
+    color: var(--terminal-purple);
+    font-style: italic;
+    opacity: 0.8;
+  }
+
+  .term-success {
+    color: var(--terminal-green);
+  }
+
+  .term-error {
+    color: var(--terminal-red);
+  }
+
+  .term-dim {
+    color: #484858;
+  }
+
+  .term-highlight {
+    color: var(--terminal-yellow);
+  }
+
+  /* ── Slack Thread Mock ── */
+  .slack-thread {
+    background: #1a1d21;
+    border: 1px solid #383b3f;
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+  }
+
+  .slack-header {
+    background: #222529;
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom: 1px solid #383b3f;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .slack-header::before {
+    content: '#';
+    color: var(--slack-purple);
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .slack-body {
+    padding: 0.5rem;
+  }
+
+  .slack-msg {
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    transition: background 0.2s;
+  }
+
+  .slack-msg:hover {
+    background: rgba(255,255,255,0.03);
+  }
+
+  .slack-msg-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .slack-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: white;
+  }
+
+  .slack-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+
+  .slack-time {
+    font-size: 0.7rem;
+    color: #616061;
+  }
+
+  .slack-text {
+    font-size: 0.85rem;
+    color: #d1d2d3;
+    padding-left: 2.4rem;
+    line-height: 1.5;
+  }
+
+  .slack-text code {
+    background: #1d2025;
+    border: 1px solid #383b3f;
+    padding: 0.1rem 0.35rem;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: #e06c75;
+  }
+
+  /* ── Jira Ticket Mock ── */
+  .jira-ticket {
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    color: #172b4d;
+    font-size: 0.85rem;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    margin: 1.5rem 0;
+  }
+
+  .jira-header {
+    background: var(--jira-blue);
+    padding: 0.75rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: white;
+  }
+
+  .jira-header .jira-key {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .jira-header .jira-type {
+    background: rgba(255,255,255,0.2);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .jira-ticket-body {
+    padding: 1.25rem;
+  }
+
+  .jira-ticket-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #172b4d;
+  }
+
+  .jira-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dfe1e6;
+  }
+
+  .jira-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .jira-field-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6b778c;
+    font-weight: 600;
+  }
+
+  .jira-field-value {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .jira-status-badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .jira-status-badge.todo {
+    background: #dfe1e6;
+    color: #42526e;
+  }
+
+  .jira-description {
+    font-size: 0.85rem;
+    line-height: 1.65;
+    color: #344563;
+  }
+
+  .jira-description h4 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #172b4d;
+    margin: 1rem 0 0.35rem;
+  }
+
+  .jira-description ul {
+    padding-left: 1.25rem;
+    margin: 0.25rem 0;
+  }
+
+  .jira-description li {
+    margin-bottom: 0.15rem;
+  }
+
+  /* ── Cards / Info Blocks ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin: 2rem 0;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--claude-orange);
+    transform: translateY(-2px);
+  }
+
+  .card-icon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .card h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  /* ── Comparison / Before-After ── */
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 1.5rem;
+    align-items: center;
+    margin: 2rem 0;
+  }
+
+  .comparison-arrow {
+    font-size: 2rem;
+    color: var(--claude-orange);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  .comparison-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .comparison-box .big-number {
+    font-size: 3rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+
+  .comparison-box .big-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .comparison-box.before { border-color: var(--terminal-red); }
+  .comparison-box.before .big-number { color: var(--terminal-red); }
+
+  .comparison-box.after { border-color: var(--success); }
+  .comparison-box.after .big-number { color: var(--success); }
+
+  /* ── Flow Diagram ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .flow-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    min-width: 120px;
+    text-align: center;
+  }
+
+  .flow-step .step-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: var(--surface-2);
+    border: 2px solid var(--border);
+    transition: all 0.3s;
+  }
+
+  .flow-step:hover .step-icon {
+    border-color: var(--claude-orange);
+    box-shadow: 0 0 20px rgba(217, 119, 6, 0.2);
+  }
+
+  .flow-step .step-label {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .flow-arrow {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    margin: 0 -0.25rem;
+  }
+
+  /* ── Stats Row ── */
+  .stats-row {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 2rem 0;
+  }
+
+  .stat {
+    text-align: center;
+  }
+
+  .stat .stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--claude-orange), #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 1;
+  }
+
+  .stat .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+  }
+
+  /* ── Callout ── */
+  .callout {
+    background: var(--accent-soft);
+    border: 1px solid rgba(217, 119, 6, 0.3);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    margin: 1.5rem 0;
+  }
+
+  .callout-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+
+  .callout-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .callout-text strong {
+    color: var(--claude-orange);
+  }
+
+  /* ── Typing Animation ── */
+  .typing-cursor::after {
+    content: '▊';
+    animation: blink 1s step-end infinite;
+    color: var(--terminal-green);
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  /* ── Slide transitions (scroll-based) ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Footer ── */
+  footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .comparison {
+      grid-template-columns: 1fr;
+    }
+    .comparison-arrow {
+      transform: rotate(90deg);
+    }
+    .terminal-body {
+      font-size: 0.72rem;
+    }
+  }
+
+  /* ── Background Decorations ── */
+  .bg-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.15;
+    pointer-events: none;
+  }
+
+  .bg-glow.orange {
+    background: var(--claude-orange);
+    width: 400px;
+    height: 400px;
+  }
+
+  .bg-glow.blue {
+    background: #3b82f6;
+    width: 300px;
+    height: 300px;
+  }
+
+  /* ── Interactive "Try it" button ── */
+  .try-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(135deg, var(--claude-orange), #f59e0b);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .try-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(217, 119, 6, 0.3);
+  }
+
+  .try-btn:active {
+    transform: translateY(0);
+  }
+
+  /* ── Step number badges ── */
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: linear-gradient(135deg, var(--claude-orange), #f59e0b);
+    color: white;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  /* ── Animated sparkles ── */
+  .sparkle {
+    position: absolute;
+    pointer-events: none;
+    animation: sparkleAnim 1.5s ease-out forwards;
+  }
+
+  @keyframes sparkleAnim {
+    0% { opacity: 1; transform: scale(0) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1) rotate(180deg); }
+    100% { opacity: 0; transform: scale(0.5) rotate(360deg) translateY(-20px); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav>
+  <div class="logo">✦ RO-AI Lab</div>
+  <div class="progress-track">
+    <div class="progress-fill" id="progressBar"></div>
+  </div>
+  <div class="slide-counter" id="slideCounter">1 / 12</div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 1: Title -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide title-slide" id="slide-1">
+  <div class="bg-glow orange" style="top: 20%; left: -10%;"></div>
+  <div class="bg-glow blue" style="bottom: 10%; right: -5%;"></div>
+  <div class="slide-inner">
+    <div class="claude-mascot" style="margin-bottom: 2rem;">
+      <div class="face"></div>
+    </div>
+    <div class="session-badge">SESSION 01 &middot; /create-ticket</div>
+    <h1>From Slack Thread to<br>Jira Ticket in <span class="highlight">30 Seconds</span></h1>
+    <p class="subtitle">How to turn messy conversations into perfectly-fielded tickets<br>with one copy-paste and two words.</p>
+    <div class="stats-row" style="margin-top: 3rem;">
+      <div class="stat">
+        <div class="stat-value">1</div>
+        <div class="stat-label">sentence of instruction</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">2</div>
+        <div class="stat-label">words to confirm</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value">9</div>
+        <div class="stat-label">automated tool calls</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 2: The Problem -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-2">
+  <div class="slide-inner reveal">
+    <div class="section-label">
+      <span class="claude-mascot tiny"><span class="face"></span></span>
+      The Problem
+    </div>
+    <h2>We've all been here...</h2>
+    <p class="lead">Great conversation happens in Slack. Decisions are made. Then someone has to turn it into a Jira ticket. Cue the collective groan.</p>
+
+    <div class="comparison">
+      <div class="comparison-box before">
+        <div class="big-number">15m</div>
+        <div class="big-label">Manual ticket creation</div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem;">
+          Re-read thread &rarr; open Jira &rarr; pick project &rarr; find epic &rarr; find sprint &rarr; set fields &rarr; write description &rarr; hope you didn't miss anything
+        </p>
+      </div>
+      <div class="comparison-arrow">→</div>
+      <div class="comparison-box after">
+        <div class="big-number">30s</div>
+        <div class="big-label">With /create-ticket</div>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.75rem;">
+          Paste thread &rarr; one sentence &rarr; review &rarr; "go for it"
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 3: The Setup (What You Need) -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-3">
+  <div class="slide-inner reveal">
+    <div class="section-label">
+      <span class="claude-mascot tiny"><span class="face"></span></span>
+      Prerequisites
+    </div>
+    <h2>What You Need</h2>
+    <p class="lead">If you have Claude Code running, you're already 90% there.</p>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-icon">💻</div>
+        <h4>Claude Code</h4>
+        <p>The CLI. Running in your terminal. That's it. The <code style="background:var(--surface-2); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.8rem;">/create-ticket</code> skill comes pre-loaded with our project config.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔗</div>
+        <h4>Jira MCP Connection</h4>
+        <p>Already configured in the management repo. Claude can search sprints, find epics, and create tickets through the <a href="https://github.com/sooperset/mcp-atlassian" target="_blank" style="color: var(--claude-orange);">Atlassian MCP server</a>.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📋</div>
+        <h4>A Slack Thread</h4>
+        <p>Copy-paste from Slack. Don't clean it up. Don't format it. The messier the better — Claude will sort it out.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-icon">💡</div>
+      <div class="callout-text">
+        <strong>Pro tip:</strong> You don't even need to type <code style="background: rgba(0,0,0,0.2); padding: 0.1rem 0.3rem; border-radius: 3px;">/create-ticket</code> explicitly. Just describe what you want — Claude recognizes the intent and invokes the skill automatically.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 4: Sidequest — Meta Restyling -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-4" style="border-left: 4px solid var(--claude-orange); border-right: 4px solid var(--claude-orange);">
+  <div class="bg-glow orange" style="top: 10%; left: 20%;"></div>
+  <div class="slide-inner reveal">
+    <div class="section-label" style="color: var(--terminal-purple);">
+      <span class="claude-mascot tiny"><span class="face"></span></span>
+      Sidequest
+    </div>
+    <h2 style="font-size: clamp(1.6rem, 3vw, 2.4rem);">Wait — you don't like how<br>this presentation looks?</h2>
+    <p class="lead">Fun fact: this whole deck was built by Claude too. And when the aesthetic felt too... <em style="color: var(--terminal-purple);">generic dark-mode AI template</em>... we just said so. Mid-stream.</p>
+
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+        <div class="terminal-title">claude — ~/code/management</div>
+      </div>
+      <div class="terminal-body">
+        <div class="term-line visible"><span class="term-prompt">the overall global styling is so bleh ai.</span></div>
+        <div class="term-line visible"><span class="term-prompt">use the /frontend-design skill to reassess</span></div>
+        <div class="term-line visible"><span class="term-prompt">and make it more lively and light</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-claude-badge">Claude</span></div>
+        <div class="term-line visible"><span class="term-tool">  ⚡ Invoking skill: frontend-design</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-claude">  <strong>Aesthetic Direction: "Warm Technical Zine"</strong></span></div>
+        <div class="term-line visible"><span class="term-claude">  - Light cream background (not generic dark)</span></div>
+        <div class="term-line visible"><span class="term-claude">  - Fraunces serif for headings (characterful)</span></div>
+        <div class="term-line visible"><span class="term-claude">  - Hard offset shadows (tactile, sticker feel)</span></div>
+        <div class="term-line visible"><span class="term-claude">  - Paper grain overlay + dot grid decorations</span></div>
+        <div class="term-line visible"><span class="term-claude">  - Terminal/Slack/Jira mocks stay dark (they pop)</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-success">  ✓ Rewrote the entire stylesheet in one pass</span></div>
+      </div>
+    </div>
+
+    <p style="color: var(--text-muted); text-align: center; margin: 1.5rem 0 0.5rem; font-size: 0.9rem;">
+      Same content. Same terminal mocks. Completely different vibe.
+    </p>
+    <p style="color: var(--text-muted); text-align: center; font-size: 0.85rem;">
+      One sentence of feedback. One skill invocation. New aesthetic.
+    </p>
+
+    <div style="text-align: center; margin-top: 2rem;">
+      <a href="01-create-ticket-v2.html#slide-4"
+         style="display: inline-flex; align-items: center; gap: 0.5rem;
+                padding: 0.75rem 1.5rem;
+                background: linear-gradient(135deg, var(--claude-orange), #f59e0b);
+                color: white; text-decoration: none;
+                border-radius: 8px;
+                font-family: 'JetBrains Mono', monospace;
+                font-size: 0.85rem; font-weight: 600;
+                transition: transform 0.2s, box-shadow 0.2s;
+                box-shadow: 0 4px 20px rgba(217, 119, 6, 0.3);">
+        ✦ See the v2 &rarr;
+      </a>
+      <p style="color: var(--text-muted); font-size: 0.75rem; margin-top: 0.75rem;">
+        (picks up right where you are, same slide)
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 5: The Input -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-5">
+  <div class="slide-inner reveal">
+    <div class="section-label">
+      <span class="claude-mascot tiny"><span class="face"></span></span>
+      Step 1 &middot; Your Input
+    </div>
+    <h2>One Sentence + Raw Paste</h2>
+    <p class="lead">Here's a real Slack thread from our team. Jeff, Jonathan, and Michael are discussing Claude database access.</p>
+
+    <div class="slack-thread">
+      <div class="slack-header">roi-ai</div>
+      <div class="slack-body">
+        <div class="slack-msg">
+          <div class="slack-msg-header">
+            <div class="slack-avatar" style="background: #4a9;">JN</div>
+            <span class="slack-name">Jeff N</span>
+            <span class="slack-time">2:34 PM</span>
+          </div>
+          <div class="slack-text">Has anyone figured out Claude skills for interacting with QA01/local databases? The per-query permissions are tedious and Claude doesn't know our schema</div>
+        </div>
+        <div class="slack-msg">
+          <div class="slack-msg-header">
+            <div class="slack-avatar" style="background: #e74;">JF</div>
+            <span class="slack-name">jonathan.falkenstein</span>
+            <span class="slack-time">2:41 PM</span>
+          </div>
+          <div class="slack-text">Giving Claude write-level permissions on the DB seems super concerning. I'd suggest a "Claude" user with only SELECT grants. No procs, no functions. Truly only <code>SELECT</code> on tables. Actually — a <strong>permission set</strong> rather than a user. Each of us gets a <code>claude_&lt;name&gt;</code> user.</div>
+        </div>
+        <div class="slack-msg">
+          <div class="slack-msg-header">
+            <div class="slack-avatar" style="background: #4a9;">JN</div>
+            <span class="slack-name">Jeff N</span>
+            <span class="slack-time">2:43 PM</span>
+          </div>
+          <div class="slack-text">SELECT only 👍 We may need to let it select on <code>information_schema</code> too so it can find things. The DAO mappers absolutely do not match column/table names.</div>
+        </div>
+        <div class="slack-msg">
+          <div class="slack-msg-header">
+            <div class="slack-avatar" style="background: #94e;">MS</div>
+            <span class="slack-name">Michael Sakaluk</span>
+            <span class="slack-time">2:47 PM</span>
+          </div>
+          <div class="slack-text">You can point it at the alembic stuff so it can learn the db schemas 🧠</div>
+        </div>
+      </div>
+    </div>
+
+    <p style="color: var(--text-muted); font-size: 0.85rem; text-align: center; margin-top: 1rem;">👆 That's the raw material. Now watch what happens when we just... paste it.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 6: The Terminal Session -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-6">
+  <div class="slide-inner reveal">
+    <div class="section-label">
+      <span class="claude-mascot tiny"><span class="face"></span></span>
+      Step 2 &middot; The Magic
+    </div>
+    <h2>Paste, Tell, Done</h2>
+
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+        <div class="terminal-title">claude — ~/code/management</div>
+      </div>
+      <div class="terminal-body" id="terminal-1">
+        <div class="term-line visible"><span class="term-prompt">see this slack thread and produce a ticket for</span></div>
+        <div class="term-line visible"><span class="term-prompt">ROIP.Q1.S3 for me at 0pt to set up the claude</span></div>
+        <div class="term-line visible"><span class="term-prompt">usage for our team members across diff envs</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-prompt">[pasted slack thread]</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-dim">───────────────────────────────────────────</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-claude-badge">Claude</span></div>
+        <div class="term-line visible"><span class="term-tool">  ⚡ Invoking skill: create-ticket</span></div>
+        <div class="term-line visible"><span class="term-tool">  📂 Loading config.yaml...</span></div>
+        <div class="term-line visible"><span class="term-tool">  🔍 Searching sprints on board 389...</span></div>
+        <div class="term-line visible"><span class="term-success">  ✓ Found ROIP.Q1.S3 → Sprint ID 20658</span></div>
+        <div class="term-line visible"><span class="term-tool">  🔍 Searching HEAL epics (reactive/KTLO)...</span></div>
+        <div class="term-line visible"><span class="term-tool">  🔍 Searching ROIP epics (parallel)...</span></div>
+        <div class="term-line visible"><span class="term-success">  ✓ Best match: HEAL-1330 "Q1 '26 Reactive Work"</span></div>
+        <div class="term-line visible"><br></div>
+      </div>
+    </div>
+
+    <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">
+      ☝️ All of this happens in ~5 seconds. No prompts, no questions. Claude reads the thread, finds the right sprint, finds the right epic, and assembles the ticket.
+    </p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 7: The Draft Review -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-7">
+  <div class="slide-inner reveal">
+    <div class="section-label">
+      <span class="claude-mascot tiny"><span class="face"></span></span>
+      Step 3 &middot; Review Gate
+    </div>
+    <h2>Claude Shows You the Draft</h2>
+    <p class="lead">Before creating anything, Claude presents the ticket for your approval. You're always in control.</p>
+
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+        <div class="terminal-title">claude — ~/code/management</div>
+      </div>
+      <div class="terminal-body">
+        <div class="term-line visible"><span class="term-claude-badge">Claude</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-highlight">  📋 Draft Ticket</span></div>
+        <div class="term-line visible"><span class="term-dim">  ┌─────────────────────────────────────────────┐</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> <span class="term-highlight">Type:</span>    Task                               <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> <span class="term-highlight">Summary:</span> Set up Claude AI read-only        <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span>          database access across envs       <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> <span class="term-highlight">Epic:</span>    HEAL-1330 (Q1 Reactive Work)      <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> <span class="term-highlight">Team:</span>    ROIP 1                            <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> <span class="term-highlight">Points:</span>  0                                 <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> <span class="term-highlight">Sprint:</span>  ROIP.Q1.S3                        <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  └─────────────────────────────────────────────┘</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-claude">  <strong>Description:</strong></span></div>
+        <div class="term-line visible"><span class="term-claude">  Set up safe, read-only database access for</span></div>
+        <div class="term-line visible"><span class="term-claude">  Claude Code across QA01 and local environments...</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-claude">  <strong>### Scope</strong></span></div>
+        <div class="term-line visible"><span class="term-claude">  - Postgres <strong>permission set</strong> (not shared user)</span></div>
+        <div class="term-line visible"><span class="term-claude">  - SELECT-only on tables, no procs</span></div>
+        <div class="term-line visible"><span class="term-claude">  - Per-engineer claude_&lt;name&gt; DB users</span></div>
+        <div class="term-line visible"><span class="term-claude">  - SELECT on information_schema</span></div>
+        <div class="term-line visible"><span class="term-claude">  - QA01 + local config</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-claude">  <strong>### Nice-to-Have</strong></span></div>
+        <div class="term-line visible"><span class="term-claude">  - Alembic-based schema pre-loading skill</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-dim">  ─────────────────────────────────────────────</span></div>
+        <div class="term-line visible"><span class="term-claude">  Confirm, or tell me what to change?</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 8: The Two-Word Confirmation -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-8">
+  <div class="slide-inner reveal">
+    <div class="section-label">
+      <span class="claude-mascot tiny"><span class="face"></span></span>
+      Step 4 &middot; Ship It
+    </div>
+    <h2>Two Words</h2>
+
+    <div class="terminal">
+      <div class="terminal-header">
+        <div class="terminal-dot red"></div>
+        <div class="terminal-dot yellow"></div>
+        <div class="terminal-dot green"></div>
+        <div class="terminal-title">claude — ~/code/management</div>
+      </div>
+      <div class="terminal-body">
+        <div class="term-line visible"><span class="term-prompt">go for it</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-claude-badge">Claude</span></div>
+        <div class="term-line visible"><span class="term-tool">  🚀 Creating issue in Jira...</span></div>
+        <div class="term-line visible"><span class="term-error">  ✗ Field format error (sprint ID, team array)</span></div>
+        <div class="term-line visible"><span class="term-tool">  🔧 Auto-correcting field formats...</span></div>
+        <div class="term-line visible"><span class="term-tool">  🚀 Retrying...</span></div>
+        <div class="term-line visible"><span class="term-success">  ✓ Created!</span></div>
+        <div class="term-line visible"><br></div>
+        <div class="term-line visible"><span class="term-dim">  ┌─────────────────────────────────────────────┐</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> <span class="term-success">HEAL-1780</span>                                  <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> Set up Claude AI read-only database          <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> access across environments                   <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span>                                              <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> Task · 0pts · ROIP 1 · ROIP.Q1.S3           <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> Epic: HEAL-1330 (Q1 '26 Reactive Work)       <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span>                                              <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  │</span> <span style="color: var(--terminal-blue);">datavant.atlassian.net/browse/HEAL-1780</span>     <span class="term-dim">│</span></div>
+        <div class="term-line visible"><span class="term-dim">  └─────────────────────────────────────────────┘</span></div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="callout-icon">🔧</div>
+      <div class="callout-text">
+        <strong>Notice the auto-recovery:</strong> The Jira API rejected the first attempt (wrong field format). Claude silently fixed the payload and retried. You never see the error. This is the kind of stuff that wastes your time when doing it manually.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 9: The Result -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-9">
+  <div class="slide-inner reveal">
+    <div class="section-label">
+      <span class="claude-mascot tiny"><span class="face"></span></span>
+      The Result
+    </div>
+    <h2>What Landed in Jira</h2>
+
+    <div class="jira-ticket">
+      <div class="jira-header">
+        <span class="jira-key">HEAL-1780</span>
+        <span class="jira-type">Task</span>
+      </div>
+      <div class="jira-ticket-body">
+        <div class="jira-ticket-title">Set up Claude AI read-only database access across environments</div>
+        <div class="jira-fields">
+          <div class="jira-field">
+            <div class="jira-field-label">Status</div>
+            <div class="jira-field-value"><span class="jira-status-badge todo">To Do</span></div>
+          </div>
+          <div class="jira-field">
+            <div class="jira-field-label">Story Points</div>
+            <div class="jira-field-value">0</div>
+          </div>
+          <div class="jira-field">
+            <div class="jira-field-label">Team</div>
+            <div class="jira-field-value">ROIP 1</div>
+          </div>
+          <div class="jira-field">
+            <div class="jira-field-label">Sprint</div>
+            <div class="jira-field-value">ROIP.Q1.S3</div>
+          </div>
+          <div class="jira-field">
+            <div class="jira-field-label">Epic</div>
+            <div class="jira-field-value">HEAL-1330</div>
+          </div>
+          <div class="jira-field">
+            <div class="jira-field-label">Assignee</div>
+            <div class="jira-field-value" style="color: #6b778c; font-style: italic;">Unassigned</div>
+          </div>
+        </div>
+        <div class="jira-description">
+          <p>Set up safe, read-only database access for Claude Code across QA01 and local environments so engineers can query schema/mapping data without manual permission grants or token-burning schema discovery.</p>
+
+          <h4>Scope</h4>
+          <ul>
+            <li>Create a Postgres <strong>permission set</strong> (not a shared user) with SELECT-only grants on tables — no proc/function execution</li>
+            <li>Each engineer gets their own <code>claude_&lt;name&gt;</code> DB user inheriting the permission set</li>
+            <li>Grant <code>SELECT</code> on <code>information_schema</code> so Claude can self-discover table/column names</li>
+            <li>Configure for both <strong>QA01</strong> and <strong>local</strong> environments</li>
+            <li>Document setup in <a href="https://datavant.atlassian.net/wiki/spaces/HealthSour/pages/2506097052" target="_blank" style="color: #60a5fa;">Confluence / team toolbox</a></li>
+          </ul>
+
+          <h4>Nice-to-Have</h4>
+          <ul>
+            <li>Claude skill or MCP config that pre-loads schema metadata (e.g., point at alembic migrations) to reduce token burn</li>
+          </ul>
+
+          <h4>Context</h4>
+          <p style="color: #6b778c;">Slack thread (Jeff N, Jonathan Falkenstein, Michael Sakaluk): engineers want Claude to query mapping data but current setup requires per-query permission approval and Claude lacks schema awareness. Consensus: read-only permission set, per-engineer users, no write/proc access.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 10: What Claude Actually Did -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-10">
+  <div class="slide-inner reveal">
+    <div class="section-label">
+      <span class="claude-mascot tiny"><span class="face"></span></span>
+      Behind the Curtain
+    </div>
+    <h2>9 Tool Calls You Never Saw</h2>
+    <p class="lead">Here's what happened between "paste" and "done."</p>
+
+    <div class="flow">
+      <div class="flow-step">
+        <div class="step-icon">🧠</div>
+        <div class="step-label">Parse<br>thread</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-icon">⚡</div>
+        <div class="step-label">Invoke<br>skill</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-icon">⚙️</div>
+        <div class="step-label">Load<br>config</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-icon">🔍</div>
+        <div class="step-label">Find<br>sprint</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-icon">🔍</div>
+        <div class="step-label">Find<br>epic</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-icon">📝</div>
+        <div class="step-label">Draft<br>ticket</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-icon">👀</div>
+        <div class="step-label">Your<br>review</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-icon">🔧</div>
+        <div class="step-label">Auto-fix<br>& retry</div>
+      </div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">
+        <div class="step-icon">✅</div>
+        <div class="step-label">Created<br>in Jira</div>
+      </div>
+    </div>
+
+    <div class="card-grid" style="margin-top: 2rem;">
+      <div class="card">
+        <h4>🎯 Contextual Intelligence</h4>
+        <p>Distinguished Jonathan's security concerns (<code style="font-size:0.75rem;">pg_terminate_backend</code>) from Jeff's pragmatic needs (<code style="font-size:0.75rem;">information_schema</code>) and Michael's nice-to-have (alembic). Organized each into the right section.</p>
+      </div>
+      <div class="card">
+        <h4>🏗️ Auto-Discovery</h4>
+        <p>Searched both HEAL and ROIP epics in parallel. No match in ROIP? Fell back to the best HEAL epic. Found the right sprint by name and mapped it to the internal ID.</p>
+      </div>
+      <div class="card">
+        <h4>🔄 Silent Recovery</h4>
+        <p>Jira API rejected the first attempt (field format issues). Claude fixed the payload format and retried — you never saw the error.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 11: Tips & Try It -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide" id="slide-11">
+  <div class="slide-inner reveal">
+    <div class="section-label">
+      <span class="claude-mascot tiny"><span class="face"></span></span>
+      Your Turn
+    </div>
+    <h2>Tips for Best Results</h2>
+
+    <div class="card-grid" style="grid-template-columns: repeat(3, 1fr);">
+      <div class="card">
+        <div class="card-icon">📋</div>
+        <h4>Don't Clean the Paste</h4>
+        <p>Raw Slack copy-paste is fine. Timestamps, usernames, emoji reactions — Claude handles it all. The more context, the better the ticket.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🎯</div>
+        <h4>Name the Target</h4>
+        <p>Tell Claude the sprint, project, or epic. "<em>ROIP.Q1.S3 at 0pt</em>" gives it enough to fill every field. If you skip this, it'll ask.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">✏️</div>
+        <h4>Use the Review Gate</h4>
+        <p>Claude always shows you the draft before creating. Don't just say "go for it" — read the description. Tweak the summary. Add a detail. The 5 seconds is worth it.</p>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top: 0;">
+      <div class="callout-icon">🔗</div>
+      <div class="callout-text">
+        <strong>Not just Slack:</strong> Paste from anywhere — meeting notes, email threads, a paragraph from a PRD, even your own stream-of-consciousness. Claude synthesizes.
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 3rem;">
+      <div class="claude-mascot" style="margin-bottom: 1.5rem;">
+        <div class="face" style="width: 80px; height: 80px;"></div>
+      </div>
+      <h3 style="margin-bottom: 0.5rem;">Try it right now</h3>
+      <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 1.5rem; font-size: 0.9rem;">
+        Open Claude Code in the management repo, find a Slack thread, and paste it with one line of direction. See what happens.
+      </p>
+
+      <div class="terminal" style="max-width: 500px; margin: 0 auto;">
+        <div class="terminal-header">
+          <div class="terminal-dot red"></div>
+          <div class="terminal-dot yellow"></div>
+          <div class="terminal-dot green"></div>
+          <div class="terminal-title">your turn</div>
+        </div>
+        <div class="terminal-body" style="text-align: left;">
+          <div class="term-line visible"><span class="term-prompt typing-cursor">make a ticket for Q1.S3 from this thread...</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SLIDE 12: Closing -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="slide title-slide" id="slide-12">
+  <div class="bg-glow orange" style="top: 30%; left: 30%;"></div>
+  <div class="slide-inner reveal">
+    <div class="claude-mascot" style="margin-bottom: 2rem;">
+      <div class="face" style="width: 96px; height: 96px;"></div>
+    </div>
+    <h2 style="margin-bottom: 0.5rem;">Next Week</h2>
+    <p class="lead" style="text-align: center; max-width: 600px; margin: 0 auto 2rem;">
+      We'll explore another skill. Got ideas? Drop them in <strong style="color: var(--claude-orange);">#roi-ai</strong>.<br>
+      <span style="font-size: 0.85rem; margin-top: 0.5rem; display: inline-block; color: #8b949e;">Skill source: <a href="https://github.com/datavant/healthsource-scripts" target="_blank" style="color: #60a5fa;">healthsource-scripts</a> → <code style="background: rgba(255,255,255,0.08); padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.8rem;">.claude/skills/create-ticket/</code></span>
+    </p>
+    <div class="session-badge" style="font-size: 0.9rem; padding: 0.6rem 1.5rem;">
+      ✦ RO-AI Lab &middot; Weekly Sessions &middot; See you there
+    </div>
+  </div>
+</section>
+
+<footer>
+  ✦ RO-AI Lab &middot; ROI Engineering &middot; 2026
+</footer>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- Scripts -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<script>
+  // Scroll-based progress + slide counter
+  const slides = document.querySelectorAll('.slide');
+  const progressBar = document.getElementById('progressBar');
+  const slideCounter = document.getElementById('slideCounter');
+  const totalSlides = slides.length;
+
+  function updateProgress() {
+    const scrollTop = window.scrollY;
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = docHeight > 0 ? (scrollTop / docHeight) * 100 : 0;
+    progressBar.style.width = progress + '%';
+
+    // Find current slide
+    let current = 1;
+    slides.forEach((slide, i) => {
+      const rect = slide.getBoundingClientRect();
+      if (rect.top < window.innerHeight / 2) {
+        current = i + 1;
+      }
+    });
+    slideCounter.textContent = current + ' / ' + totalSlides;
+  }
+
+  window.addEventListener('scroll', updateProgress);
+  updateProgress();
+
+  // Reveal on scroll
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.15 });
+
+  reveals.forEach(el => observer.observe(el));
+
+  // Keyboard navigation
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      navigateSlide(1);
+    } else if (e.key === 'ArrowUp' || e.key === 'PageUp') {
+      e.preventDefault();
+      navigateSlide(-1);
+    }
+  });
+
+  function navigateSlide(direction) {
+    let currentIndex = 0;
+    slides.forEach((slide, i) => {
+      const rect = slide.getBoundingClientRect();
+      if (rect.top < window.innerHeight / 2) {
+        currentIndex = i;
+      }
+    });
+
+    const nextIndex = Math.max(0, Math.min(totalSlides - 1, currentIndex + direction));
+    slides[nextIndex].scrollIntoView({ behavior: 'smooth' });
+  }
+
+  // Sparkle effect on claude mascot click
+  document.querySelectorAll('.claude-mascot .face').forEach(face => {
+    face.style.cursor = 'pointer';
+    face.addEventListener('click', (e) => {
+      for (let i = 0; i < 6; i++) {
+        const sparkle = document.createElement('div');
+        sparkle.className = 'sparkle';
+        sparkle.textContent = '✦';
+        sparkle.style.left = (e.clientX + (Math.random() - 0.5) * 60) + 'px';
+        sparkle.style.top = (e.clientY + (Math.random() - 0.5) * 60) + 'px';
+        sparkle.style.color = ['#d97706', '#f59e0b', '#fbbf24', '#22c55e', '#60a5fa', '#c084fc'][i];
+        sparkle.style.fontSize = (0.8 + Math.random() * 0.8) + 'rem';
+        sparkle.style.position = 'fixed';
+        sparkle.style.zIndex = '999';
+        document.body.appendChild(sparkle);
+        setTimeout(() => sparkle.remove(), 1500);
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
