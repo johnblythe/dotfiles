@@ -14,9 +14,9 @@ Create a pull request for the current branch:
    - **Summary** section: bullet points of key changes from commits
    - **Closes** section: `Closes #X` for each issue number found in branch name
    - **Test plan** section: markdown checklist of what to test
-8. Create PR using:
+8. Write PR body to temp file, then create PR:
    ```bash
-   gh pr create --title "PR title here" --body "$(cat <<'EOF'
+   cat <<'EOF' > /tmp/gh-body.md
    ## Summary
    - Key change 1
    - Key change 2
@@ -27,8 +27,9 @@ Create a pull request for the current branch:
    - [ ] Test item 1
    - [ ] Test item 2
    EOF
-   )" --base <base-branch>
+   gh pr create --title "PR title here" --body-file /tmp/gh-body.md --base <base-branch>
    ```
+   **NEVER use `$()` command substitution** — always use `--body-file` to avoid permission prompts.
 9. Display the PR URL returned
 
 ## Important Notes

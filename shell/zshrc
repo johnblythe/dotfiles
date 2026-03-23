@@ -1,3 +1,6 @@
+# Load secrets (API keys, tokens) — not committed to dotfiles
+[ -f "$HOME/.secrets" ] && source "$HOME/.secrets"
+
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
@@ -173,3 +176,23 @@ alias claude-compound='claude --settings '\''{"enabledPlugins":{"compound-engine
 
 
 alias finos='cd /Users/johnblythe/finances && source .venv/bin/activate && python3 -m tui'
+
+# bird (X/Twitter CLI)
+# Set AUTH_TOKEN and CT0 in ~/.secrets (not committed)
+export AUTH_TOKEN="${AUTH_TOKEN:-}"
+export CT0="${CT0:-}"
+# Set ANTHROPIC_API_KEY in ~/.secrets (not committed)
+export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY:-}"
+
+# todui — terminal task manager
+export TODUI_DIR="$HOME/code/todoing"
+
+# Yazi: cd into directory on exit with 'y'
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	yazi "$@" --cwd-file="$tmp"
+	if cwd="$(command cat -- "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+		builtin cd -- "$cwd"
+	fi
+	rm -f -- "$tmp"
+}

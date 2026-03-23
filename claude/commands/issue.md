@@ -57,9 +57,12 @@ Flags:
 
 **Steps:**
 1. Parse title and flags
-2. Create on GitHub: `gh issue create --title "TITLE" --label "LABELS"`
-3. Add to `.issues.json` with `needsSync: false`
-4. Confirm: "Created #NUMBER: TITLE"
+2. If issue has a body/description, write it to `/tmp/gh-issue-body.md` first
+3. Create on GitHub: `gh issue create --title "TITLE" --label "LABELS" --body-file /tmp/gh-issue-body.md`
+   - For simple issues with no body: `gh issue create --title "TITLE" --label "LABELS"`
+   - **NEVER use `$()` command substitution or heredocs inside gh arguments** — always use `--body-file` with a temp file
+4. Add to `.issues.json` with `needsSync: false`
+5. Confirm: "Created #NUMBER: TITLE"
 
 **Local-only mode:** If `--local` flag or GitHub unavailable:
 - Generate `id: "local-{n}"`

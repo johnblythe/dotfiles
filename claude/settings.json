@@ -1,0 +1,152 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Skill(dev-browser:dev-browser)",
+      "Bash(npx tsx:*)",
+      "Bash(gh pr:*)",
+      "Bash(gh issue:*)",
+      "Bash(gh gist:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git fetch:*)",
+      "Bash(git remote:*)",
+      "Bash(git stash list:*)",
+      "Bash(git commit:*)",
+      "Bash(git add:*)",
+      "Bash(git checkout:*)",
+      "Bash(git push:*)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(vercel:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(cat:*)",
+      "Bash(mkdir:*)",
+      "Bash(du:*)",
+      "Bash(docker:*)",
+      "WebSearch",
+      "WebFetch",
+      "mcp__plugin_compound-engineering_context7__query-docs",
+      "mcp__plugin_compound-engineering_context7__resolve-library-id",
+      "Bash(source:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(pip:*)",
+      "Bash(pip3:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(wc:*)",
+      "Bash(chmod:*)",
+      "Bash(echo:*)",
+      "Bash(ln:*)",
+      "Skill(compound-engineering:plan_review)",
+      "Skill(compound-engineering:workflows:work)",
+      "Bash(bash:*)",
+      "Skill(next)",
+      "Skill(smart-handoff)",
+      "Skill(commit)",
+      "Skill(create-pr)",
+      "Skill(pr-review)",
+      "Skill(log-issue)",
+      "Skill(sync-issues)",
+      "Skill(close-issue)",
+      "Skill(frontend-design)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat context/HANDOFF.md 2>/dev/null || cat context/WORKING.md 2>/dev/null || echo 'No handoff context found'"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/check-prisma-migrations.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash ~/.claude/hooks/check-changelog.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/shaping-ripple.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terminal-notifier -title 'Claude Code' -message 'Needs your input' && afplay /System/Library/Sounds/Ping.aiff"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "terminal-notifier -title 'Claude Code' -message 'Task complete' && afplay /System/Library/Sounds/Pop.aiff"
+          }
+        ]
+      }
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash ~/.claude/statusline.sh"
+  },
+  "enabledPlugins": {
+    "feature-dev@claude-code-plugins": true,
+    "security-guidance@claude-code-plugins": true,
+    "document-skills@anthropic-agent-skills": true,
+    "pr-review-toolkit@claude-code-plugins": true,
+    "frontend-design@claude-code-plugins": true,
+    "dev-browser@dev-browser-marketplace": true,
+    "compound-engineering@every-marketplace": true,
+    "superpowers@superpowers-marketplace": false,
+    "claude-hud@claude-hud": false,
+    "figma@claude-plugins-official": false,
+    "atlassian@claude-plugins-official": false,
+    "rust-analyzer-lsp@claude-plugins-official": false,
+    "manifest-dev@manifest-dev": false,
+    "superpowers@claude-plugins-official": false,
+    "ralph-wiggum@claude-code-plugins": true
+  },
+  "alwaysThinkingEnabled": true,
+  "effortLevel": "high",
+  "autoUpdatesChannel": "latest",
+  "voiceEnabled": false
+}

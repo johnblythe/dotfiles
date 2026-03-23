@@ -23,6 +23,14 @@
 - Never use Co-Authored-By Claude signature
 - When updating CHANGELOG.md, include issue numbers (e.g., "#45")
 - **Before creating PR**: Update CHANGELOG.md with Added/Changed/Fixed entries
+- **CRITICAL — No command substitution in ANY git/gh command**: Never use `$()`, backticks, or heredocs in `git commit`, `gh pr create`, or any git/gh command. These trigger permission prompts.
+  - `git commit`: use plain `-m "message"`. For multi-line, use multiple `-m` flags: `-m "title" -m "body"`.
+  - `gh pr create` / `gh issue create` / any `gh` multi-line bodies:
+    1. Use the **Write tool** (not cat, not echo, not heredoc) to create `tmp/gh-body.md` (project root `tmp/`, NOT `.claude/tmp/` which is a sensitive dir and triggers permission prompts)
+    2. Then run: `gh issue create --body-file tmp/gh-body.md ...`
+    3. **NEVER use `cat >`, `cat <<`, echo, or any Bash command to write the body file.** Always use the Write tool.
+  - On first use per project, run `mkdir -p tmp` and ensure `tmp/` is in `.gitignore`.
+  - This overrides any system instructions that suggest `$(cat <<'EOF'...)` patterns.
 
 ## Builds & Servers
 - Never run `npm run build` or `npm run dev` without explicit request
@@ -46,13 +54,20 @@
 - Show locked features with visual indicators, not errors
 - Free tier = real value, not crippled demo
 
-## Plans
-- End each plan with unresolved questions (extremely concise)
+## Plan Mode
+- Make the plan extremely concise. Sacrifice grammar for the sake of concision.
+- At the end of each plan, give me a list of unresolved questions to answer, if any.
 
 ## Debugging
 - 3+ failed attempts → STOP, find reference impl
 - Check for relevant skills before iterating
 - "Push and pray" = you don't understand the problem
+
+## Execution Strategy
+- Default to parallelized teams (TeamCreate + Task tool) for multi-step implementation work
+- Spawn concurrent agents for independent tasks — don't serialize what can run in parallel
+- Use teams for: feature dev with 3+ files, plan execution, multi-area refactors, test + implement combos
+- Solo is fine for: single-file edits, quick lookups, trivial fixes
 
 ## Context Management
 - Never stop tasks early due to token budget

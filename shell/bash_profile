@@ -1,0 +1,9 @@
+export PATH=$HOME/bin:$PATH
+export PATH=$PATH:/opt/homebrew/bin/ssh
+
+
+eval "$(github-copilot-cli alias -- "$0")"
+. "$HOME/.cargo/env"
+
+# Added by tempoup installer
+. "/Users/johnblythe/.tempo/env"

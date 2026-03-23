@@ -12,9 +12,9 @@ if ! command -v brew &> /dev/null; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
 
-# Install essentials
-echo "==> Installing essentials via Homebrew..."
-brew install gh git nvm zellij
+# Install packages from Brewfile
+echo "==> Installing Homebrew packages..."
+xargs brew install < "$DOTFILES_DIR/Brewfile"
 
 # Install Oh My Zsh if missing
 if [ ! -d "$HOME/.oh-my-zsh" ]; then
@@ -31,25 +31,46 @@ backup_if_exists() {
 }
 
 backup_if_exists "$HOME/.zshrc"
+backup_if_exists "$HOME/.zprofile"
+backup_if_exists "$HOME/.zshenv"
+backup_if_exists "$HOME/.bash_profile"
+backup_if_exists "$HOME/.bashrc"
 backup_if_exists "$HOME/.gitconfig"
 
 # Create config directories
-mkdir -p "$HOME/.claude/commands" "$HOME/.claude/hooks"
+mkdir -p "$HOME/.claude/commands" "$HOME/.claude/hooks" "$HOME/.claude/skills" "$HOME/.claude/agents"
 mkdir -p "$HOME/.config/zellij"
 mkdir -p "$HOME/.config/ghostty"
 
-# Create symlinks
-echo "==> Creating symlinks..."
+# Create symlinks — shell
+echo "==> Creating shell symlinks..."
 ln -sf "$DOTFILES_DIR/shell/zshrc" "$HOME/.zshrc"
+ln -sf "$DOTFILES_DIR/shell/zprofile" "$HOME/.zprofile"
+ln -sf "$DOTFILES_DIR/shell/zshenv" "$HOME/.zshenv"
+ln -sf "$DOTFILES_DIR/shell/bash_profile" "$HOME/.bash_profile"
+ln -sf "$DOTFILES_DIR/shell/bashrc" "$HOME/.bashrc"
+
+# Git
 ln -sf "$DOTFILES_DIR/git/gitconfig" "$HOME/.gitconfig"
 
 # Claude Code
+echo "==> Creating Claude Code symlinks..."
 ln -sf "$DOTFILES_DIR/claude/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
+ln -sf "$DOTFILES_DIR/claude/settings.json" "$HOME/.claude/settings.json"
+ln -sf "$DOTFILES_DIR/claude/statusline.sh" "$HOME/.claude/statusline.sh"
+
 for cmd in "$DOTFILES_DIR/claude/commands"/*.md; do
   ln -sf "$cmd" "$HOME/.claude/commands/$(basename "$cmd")"
 done
 for hook in "$DOTFILES_DIR/claude/hooks"/*; do
   ln -sf "$hook" "$HOME/.claude/hooks/$(basename "$hook")"
+done
+for agent in "$DOTFILES_DIR/claude/agents"/*; do
+  ln -sf "$agent" "$HOME/.claude/agents/$(basename "$agent")"
+done
+for skill in "$DOTFILES_DIR/claude/skills"/*/; do
+  skill_name=$(basename "$skill")
+  ln -sf "$DOTFILES_DIR/claude/skills/$skill_name" "$HOME/.claude/skills/$skill_name"
 done
 
 # Ghostty
@@ -71,4 +92,21 @@ if ! gh repo view johnblythe/ideas &> /dev/null; then
   gh repo create ideas --private --description "Quick ideas captured via CLI"
 fi
 
-echo "==> Done! Restart your shell or run: source ~/.zshrc"
+# Install Claude Code if needed
+if ! command -v claude &> /dev/null; then
+  echo "==> Install Claude Code: npm install -g @anthropic-ai/claude-code"
+fi
+
+# Install nvm if needed
+if [ ! -d "$HOME/.nvm" ]; then
+  echo "==> Installing nvm..."
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+fi
+
+echo ""
+echo "==> Done! Next steps:"
+echo "    1. Restart your shell or run: source ~/.zshrc"
+echo "    2. Run: nvm install --lts"
+echo "    3. Run: npm install -g @anthropic-ai/claude-code"
+echo "    4. Copy ~/.claude/settings.local.json from secure backup (API keys)"
+echo "    5. Copy ~/.claude/projects/*/memory/ from backup (Claude memory)"

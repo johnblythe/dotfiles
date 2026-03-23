@@ -1,0 +1,11 @@
+export PATH=$HOME/bin:$PATH
+export PATH=/usr/local/:$PATH
+export PATH=$PATH:/opt/homebrew/bin/ssh
+
+# Generated for envman. Do not edit.
+[ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
+
+. "$HOME/.cargo/env"
+
+# Added by tempoup installer
+. "/Users/johnblythe/.tempo/env"
