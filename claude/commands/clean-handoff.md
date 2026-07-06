@@ -48,9 +48,14 @@ Create `context/HANDOFF.md` by analyzing the full conversation:
 
 ## How to Resume
 [Commands to run, servers to start, tests to check — everything needed to pick up where we left off]
+
+## Skills for Next Session
+[1-4 skills the next agent should probably load. Pick from what's left to do. Examples: `diagnose` if debugging, `to-prd`/`to-issues` if planning, `ce-work` if executing, `prototype` if exploring design, `edit-article` if writing.]
 ```
 
 **Important**: This file is the SOLE context carrier for the next session. It must be complete enough to resume work without any conversation history. Don't be terse to the point of losing critical context.
+
+**Anti-duplication rule**: If an artifact already captures the info (open PR, issue, commit message, plan doc, ADR, PRD), reference it by URL or path instead of paraphrasing. Handoffs that re-summarize artifacts drift from reality fast. Cite, don't copy.
 
 ## Step 3: Summary
 

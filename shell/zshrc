@@ -196,3 +196,36 @@ function y() {
 	fi
 	rm -f -- "$tmp"
 }
+# Ghostty theme toggle: `dark` or `light` to switch themes
+ghostty-theme() {
+  local config="$HOME/Library/Application Support/com.mitchellh.ghostty/config"
+  local dark_theme="Dracula"
+  local light_theme="Gruvbox Light"
+  local target
+
+  if [[ "$1" == "light" ]]; then
+    target="$light_theme"
+  elif [[ "$1" == "dark" ]]; then
+    target="$dark_theme"
+  else
+    # toggle based on current
+    local current
+    current=$(grep '^theme = ' "$config" | sed 's/theme = //')
+    if [[ "$current" == "$dark_theme" ]]; then
+      target="$light_theme"
+    else
+      target="$dark_theme"
+    fi
+  fi
+
+  sed -i '' "s/^theme = .*/theme = $target/" "$config"
+  osascript -e 'tell application "System Events" to keystroke "," using {command down, shift down}'
+  echo "ghostty theme → $target"
+}
+
+alias dark='ghostty-theme dark'
+alias light='ghostty-theme light'
+
+# >>> grok installer >>>
+export PATH="$HOME/.grok/bin:$PATH"
+# <<< grok installer <<<

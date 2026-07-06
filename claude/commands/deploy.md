@@ -44,6 +44,24 @@ After compound finishes:
 
 This ensures learnings are in the repo, in the PR, reviewable, and deployed — not just local state.
 
+## Step 4.5: Rebase onto main + CHANGELOG
+
+**Before touching CHANGELOG, always rebase onto main.** This prevents cascading merge conflicts when deploying multiple worktree PRs sequentially.
+
+```bash
+git fetch origin main --quiet
+git rebase origin/main
+```
+
+If rebase has conflicts, resolve them, then `git rebase --continue`.
+
+**Then** update CHANGELOG.md:
+1. Add entries under `## [Unreleased]` in the appropriate section (Added/Changed/Fixed)
+2. Include GitHub issue numbers
+3. Commit: `git add CHANGELOG.md && git commit -m "Update CHANGELOG"`
+
+This ordering (rebase → CHANGELOG → push) guarantees each CHANGELOG edit starts from the latest version of main.
+
 ## Step 5: Create PR
 
 If no PR exists yet for this branch:
@@ -55,22 +73,18 @@ If PR already exists, push the review-fix and compound commits.
 
 ## Step 6: Monitor Vercel build
 
-Poll the PR's check status until it resolves:
+Start `gh pr checks --watch` in the background, then use the Monitor tool to stream its output. This replaces sleep-based polling — do NOT use `sleep` or a loop.
 
 ```bash
-# Poll every 30s, up to 10 min
-for i in $(seq 1 20); do
-  STATUS=$(gh pr checks --json name,state --jq '[.[] | select(.name | test("Vercel"; "i"))] | .[0].state' 2>/dev/null)
-  if [ "$STATUS" = "SUCCESS" ]; then echo "BUILD PASSED"; break; fi
-  if [ "$STATUS" = "FAILURE" ]; then echo "BUILD FAILED"; break; fi
-  sleep 30
-done
+gh pr checks --watch
 ```
 
-If no Vercel-specific check found, fall back to checking all PR checks:
-```bash
-gh pr checks
-```
+Run with `run_in_background: true`, then call Monitor on the returned task ID. Monitor fires on each stdout line and completes when the command exits (i.e., all checks reach a terminal state).
+
+Parse Monitor output to determine outcome:
+- Any line containing `fail` or `FAIL` → build failed
+- All checks show `pass` / `PASS` → build passed
+- If no Vercel-specific check appears → fall back: `gh pr checks` (single snapshot)
 
 ### If build FAILED:
 - Fetch build logs: `gh pr checks --json name,state,link`
@@ -81,6 +95,24 @@ gh pr checks
 - Continue to merge.
 
 ## Step 7: Merge
+
+First, detect if you're in a worktree:
+
+```bash
+GIT_DIR=$(git rev-parse --git-dir)
+GIT_COMMON=$(git rev-parse --git-common-dir)
+# If these differ, you're in a worktree
+```
+
+**If in a worktree** — `gh pr merge` will fail because it tries to checkout main locally, but main is already checked out in the primary repo. Use the GitHub API directly:
+
+```bash
+gh api repos/{owner}/{repo}/pulls/{pr_number}/merge -f merge_method=squash
+# Then delete the remote branch:
+gh api repos/{owner}/{repo}/git/refs/heads/{branch_name} -X DELETE
+```
+
+**If NOT in a worktree** — use the standard command:
 
 ```bash
 gh pr merge --squash --delete-branch
@@ -100,14 +132,7 @@ Use `--squash` by default. If the branch has meaningful individual commits the u
 
 ### Worktree cleanup
 1. Check if in worktree: compare `git rev-parse --git-common-dir` vs `--git-dir`
-2. If in worktree:
-   ```bash
-   BRANCH=$(git branch --show-current)
-   WORKTREE_PATH=$(pwd)
-   cd "$(git rev-parse --git-common-dir)/.."
-   git worktree remove "$WORKTREE_PATH" --force
-   git branch -D "$BRANCH" 2>/dev/null
-   ```
+2. If in worktree, use the `ExitWorktree` tool to leave and clean up. This is the correct way — do NOT try to `cd` out and `git worktree remove` manually from inside the worktree.
 3. Not in worktree → skip.
 
 ## Step 9: Marketing Coverage Check
@@ -136,3 +161,11 @@ Ship complete ✓
 ```
 
 Omit lines that don't apply.
+
+---
+
+**Context reset check** — after the summary, always prompt:
+
+> "Deploy complete. This is a good point to `/clear` context before starting the next task — especially if this session has been running a while or covered multiple topics. Want to clear now?"
+
+Do not skip this prompt. It's the natural checkpoint.
